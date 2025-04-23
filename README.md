@@ -1,0 +1,1 @@
+# digicert-terraform-provider
