@@ -16,8 +16,8 @@
 
 ## Requirements
 
-- Terraform 0.13.x or higher
-- DigiCert-One platform API credentials (API Key)
+- HashiCorp Terraform 0.13.x or higher
+- DigiCert ONE platform API credentials (API Key)
 
 ## Installation
 
@@ -57,7 +57,7 @@ terraform init
 
 ## Provider Configuration
 
-Configure the provider with the DigiCert-One API base URL and an API key:
+Configure the provider with the DigiCert ONE API base URL and an API key:
 
 ```hcl
 provider "digicert" {
@@ -70,8 +70,8 @@ provider "digicert" {
 
 | Name     | Description                                                                           | Type   | Required |
 |----------|--------------------------------------------------------------------------------------|--------|----------|
-| url      | The URL pointing to the DigiCert-ONE platform (e.g., "https://stage.one.digicert.com") | String | Yes      |
-| api_key  | The api key corresponding to a user’s account for authenticating to the DigiCert-ONE platform                           | String | Yes      |
+| url      | The URL pointing to the DigiCert ONE platform (e.g., "https://stage.one.digicert.com") | String | Yes      |
+| api_key  | The api key corresponding to a user’s account for authenticating to the DigiCert ONE platform                           | String | Yes      |
 
 ## Resources
 
@@ -167,7 +167,7 @@ output "certificate_serial" {
 
     Upon successful execution, Terraform will:
 
-    Send a request to the DigiCert-ONE API.
+    Send a request to the DigiCert ONE API.
 
     Issue the requested certificates.
 
@@ -212,7 +212,7 @@ terraform destroy
 ### Important Notes on Revocation
 
 - Removing a certificate resource from the configuration or using `destroy` will trigger certificate revocation.
-- The certificate will be removed from both the DigiCert-ONE platform and the Terraform state file.
+- The certificate will be removed from both the DigiCert ONE platform and the Terraform state file.
 - Always use `terraform plan` before `apply` or `destroy` to preview changes.
 
 ## Security Best Practices
