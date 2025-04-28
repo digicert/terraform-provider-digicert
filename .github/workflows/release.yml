@@ -30,7 +30,7 @@ jobs:
 
       - name: Setup Certificate 
         run: | 
-          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12 
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > D:\\Certificate_pkcs12.p12 
         shell: bash 
 
       - name: Set variables 
@@ -40,32 +40,31 @@ jobs:
           echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
           echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
           echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
-          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "GPG_CONF_FILE_PATH=C:/Users/RUNNER~1/.gnupg" >> "$GITHUB_ENV"
         shell: bash 
 
       - name: GPG Signing with Secure Software Manager
         id: installer
         uses: digicert/ssm-gpg-signing@v0.0.2
       
-      - run: | 
-          echo “installation Path "${{ steps.installer.outputs.extractPath }}"”
-
       - name: Configuration
         run: |
-          del "C:\Users\RUNNER~1\.gnupg\gpg-agent.conf"
-          copy "${{ github.workspace }}\gpg-agent.conf" "C:\Users\RUNNER~1\.gnupg\gpg-agent.conf"
+          del "${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf"
+          echo verbose > ${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf
+          echo debug-all >> ${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf
+          echo "scdaemon-program C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\DigiCert One Signing Manager Tools\\ssm-scd.exe" >> ${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf
           
       - name: Import gpg key
         id: gpg-key
         run: |
           gpgconf --kill all
-          smctl gpg keyring download ${{ secrets.SM_GPG_KEY_ID }} --file-path C:\\Users\\RUNNER~1\\.gnupg\\pubring.gpg
+          smctl gpg keyring download ${{ secrets.SM_GPG_KEY_ID }} --file-path ${{ env.GPG_CONF_FILE_PATH }}/pubring.gpg
           gpg --card-status
           
           # Extract fingerprint and set as step output
           FINGERPRINT=$(gpg --list-secret-keys --with-colons --fingerprint | grep fpr | head -n 1 | cut -d':' -f10)
           FINGERPRINT=${FINGERPRINT//:}
-          echo "Fingerprint: $FINGERPRINT"
           echo "fingerprint=$FINGERPRINT" >> $GITHUB_OUTPUT
         shell: bash
 
@@ -80,4 +79,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ env.TAG_NAME }}
           GORELEASER_VERSION: ${{ env.TAG_NAME }}
-          GPG_FINGERPRINT: ${{ steps.gpg-key.outputs.fingerprint }} 
+          GPG_FINGERPRINT: ${{ steps.gpg-key.outputs.fingerprint }}
