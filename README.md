@@ -257,7 +257,7 @@ To maintain code quality, security standards, and alignment with our internal de
 
 ## Contact Us
 
-If you have any questions, suggestions, or issues regarding this provider, you can contact [DigiCert Support](https://www.digicert.com/support/pki-support)
+If you have any questions, suggestions, or issues regarding this provider, you can contact us at terraform-provider-support@digicert.com.
 
 ## License
 
