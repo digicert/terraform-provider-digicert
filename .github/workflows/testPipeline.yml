@@ -44,7 +44,7 @@ jobs:
         with:
           repository: digicert/DigicertTerraformTests
           path: DigicertTerraformTests
-          token: ${{ secrets.QA_REPO_TOKEN }}
+          token: ${{ secrets.QA_TOKEN }}
           ref: master
 
       - name: 📤 Copy Provider Binary to Automation Repo Root
@@ -105,7 +105,7 @@ jobs:
         with:
           repository: digicert/DigicertTerraformTests
           path: DigicertTerraformTests
-          token: ${{ secrets.QA_REPO_TOKEN }}
+          token: ${{ secrets.QA_TOKEN }}
           ref: master
 
       - name: 📤 Copy Provider Binary to Automation Repo Root
