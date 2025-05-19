@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
      
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -28,48 +28,12 @@ jobs:
           echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           echo "Version extracted: ${GITHUB_REF#refs/tags/}"
 
-      - name: Setup Certificate 
-        run: | 
-          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > D:\\Certificate_pkcs12.p12 
-        shell: bash 
-
-      - name: Set variables 
-        id: variables 
-        run: | 
-          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
-          echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
-          echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
-          echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
-          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV"
-          echo "GPG_CONF_FILE_PATH=C:/Users/RUNNER~1/.gnupg" >> "$GITHUB_ENV"
-        shell: bash 
-
-      - name: GPG Signing with Secure Software Manager
-        id: installer
-        uses: digicert/ssm-gpg-signing@v0.0.2
-      
-      - name: Configuration
-        run: |
-          del "${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf"
-          echo verbose > ${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf
-          echo debug-all >> ${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf
-          echo "scdaemon-program C:\\Users\\RUNNER~1\\AppData\\Local\\Temp\\DigiCert One Signing Manager Tools\\ssm-scd.exe" >> ${{ env.GPG_CONF_FILE_PATH }}/gpg-agent.conf
-          
-      - name: Import gpg key
-        id: gpg-key
-        run: |
-          gpgconf --kill all
-          smctl gpg keyring download ${{ secrets.SM_GPG_KEY_ID }} --file-path ${{ env.GPG_CONF_FILE_PATH }}/pubring.gpg
-          gpg --card-status
-          
-          # Extract fingerprint and set as step output
-          FINGERPRINT=$(gpg --list-secret-keys --with-colons --fingerprint | grep fpr | head -n 1 | cut -d':' -f10)
-          FINGERPRINT=${FINGERPRINT//:}
-          echo "fingerprint=$FINGERPRINT" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Clean working directory
-        run: git clean -fd
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@e89d40939c28e39f97cf32126055eeae86ba74ec # v6.3.0
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
@@ -79,4 +43,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ env.TAG_NAME }}
           GORELEASER_VERSION: ${{ env.TAG_NAME }}
-          GPG_FINGERPRINT: ${{ steps.gpg-key.outputs.fingerprint }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
