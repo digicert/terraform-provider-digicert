@@ -122,10 +122,11 @@ jobs:
           java-version: '17'
 
       - name: 🧪 Run Maven Automation Tests
+        id: maven-test
         working-directory: DigicertTerraformTests
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
 
       - name: 🧪 Re-Run failed Tests
         working-directory: DigicertTerraformTests
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-        if: failure() 
+        if: steps.maven-test.outcome == 'failure'
