@@ -140,13 +140,10 @@ jobs:
         working-directory: DigicertTerraformTests
         shell: powershell
         run: |
-            try {
-              mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-              $exitCode = $LASTEXITCODE
-            } catch {
-              $exitCode = 1
-            }
-            echo "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+            $exitCode = $LASTEXITCODE
+            "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        
   
     
       - name: 🧪 Re-Run failed Tests
