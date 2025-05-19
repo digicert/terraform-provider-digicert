@@ -52,7 +52,7 @@ jobs:
           repository: digicert/DigicertTerraformTests
           path: DigicertTerraformTests
           token: ${{ secrets.QA_TOKEN }}
-          ref: master
+          ref: fixesPipeline
 
       - name: 📤 Copy Provider Binary to Automation Repo Root
         run: cp terraform-provider-digicert DigicertTerraformTests/
@@ -123,7 +123,7 @@ jobs:
           repository: digicert/DigicertTerraformTests
           path: DigicertTerraformTests
           token: ${{ secrets.QA_TOKEN }}
-          ref: master
+          ref: fixesPipeline
 
       - name: 📤 Copy Provider Binary to Automation Repo Root
         shell: powershell
