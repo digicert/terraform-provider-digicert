@@ -24,6 +24,10 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: 🧹 Clean Go Module Cache (Optional but helpful)
+        run: |
+          go clean -modcache
+
       - name: 📦 Build Terraform Provider
         run: |
           go mod tidy
