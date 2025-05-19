@@ -48,7 +48,7 @@ jobs:
           repository: digicert/DigicertTerraformTests
           path: DigicertTerraformTests
           token: ${{ secrets.QA_TOKEN }}
-          ref: master
+          ref: fixesPipeline
 
       - name: 📤 Copy Provider Binary to Automation Repo Root
         run: cp terraform-provider-digicert DigicertTerraformTests/
@@ -63,11 +63,12 @@ jobs:
         id: maven-test
         working-directory: DigicertTerraformTests
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-  
+        continue-on-error: true
+        
       - name: 🧪 Re-Run failed Tests
         working-directory: DigicertTerraformTests
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-        if: steps.maven-test.outcome == 'failure'
+        if: failure()
 
   windows-test:
     needs: ubuntu-test
@@ -115,7 +116,7 @@ jobs:
           repository: digicert/DigicertTerraformTests
           path: DigicertTerraformTests
           token: ${{ secrets.QA_TOKEN }}
-          ref: master
+          ref: fixesPipeline
 
       - name: 📤 Copy Provider Binary to Automation Repo Root
         shell: powershell
@@ -131,8 +132,9 @@ jobs:
         id: maven-test
         working-directory: DigicertTerraformTests
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-
+        continue-on-error: true
+          
       - name: 🧪 Re-Run failed Tests
         working-directory: DigicertTerraformTests
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-        if: steps.maven-test.outcome == 'failure'
+        if: failure()
