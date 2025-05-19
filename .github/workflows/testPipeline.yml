@@ -66,14 +66,17 @@ jobs:
       - name: 🧪 Run Maven Automation Tests
         id: maven-test
         working-directory: DigicertTerraformTests
-        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-        continue-on-error: true
-        
+        run: |
+          set +e
+          mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          exit 0  # Prevent step from failing the job
+    
       - name: 🧪 Re-Run failed Tests
         working-directory: DigicertTerraformTests
+        if: steps.maven-test.outputs.exit_code != '0'
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-        if: failure()
-
+    
   windows-test:
     needs: ubuntu-test
     if: always()
@@ -135,10 +138,14 @@ jobs:
       - name: 🧪 Run Maven Automation Tests
         id: maven-test
         working-directory: DigicertTerraformTests
-        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-        continue-on-error: true
-          
+        run: |
+            set +e
+            mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+            echo "exit_code=$?" >> $GITHUB_OUTPUT
+            exit 0  # Prevent step from failing the job
+    
       - name: 🧪 Re-Run failed Tests
         working-directory: DigicertTerraformTests
+        if: steps.maven-test.outputs.exit_code != '0'
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-        if: failure()
+    
