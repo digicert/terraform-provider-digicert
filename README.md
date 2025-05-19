@@ -105,7 +105,7 @@ resource "digicert_certificate" "cert" {
 
 | Name         | Description                                                   | Type           | Required |
 |--------------|---------------------------------------------------------------|----------------|----------|
-| profile_id   | ID of an existing DigiCert ONE TLM profile to use for certificate | String         | Yes      |
+| profile_id   | ID of an existing DigiCert​​®​​ Trust Lifecycle Manager profile to use for certificate | String         | Yes      |
 | common_name  | Common name of the certificate                                | String         | Yes      |
 | dns_names    | SANs of the certificate, if any                               | List of Strings| No       |
 | csr          | Certificate Signing Request (CSR) in PEM format               | String         | No       |
@@ -167,7 +167,7 @@ output "certificate_serial" {
 
     Upon successful execution, Terraform will:
 
-    Send a request to the DigiCert ONE TLM API.
+    Send a request to the DigiCert​​®​​ Trust Lifecycle Manager API.
 
     Issue the requested certificates.
 
@@ -239,13 +239,13 @@ For comprehensive guidelines, refer to [HashiCorp's Sensitive Data in State docu
 
 - Error: Validation failed due to unknown attributes
 
-  - Check the DigiCert ONE TLM API documentation for the correct certificate attributes.
+  - Check the DigiCert​​®​​ Trust Lifecycle Manager API documentation for the correct certificate attributes.
 
 - Error: Certificate issuance failed (400 Bad Request)
 
   - Ensure all required fields are correctly defined in main.tf.
 
-For more details, refer to the [DigiCert ONE TLM API documentation](https://stage.one.digicert.com/mpki/docs/swagger-ui/index.html#/Inventory) or enable Terraform debugging:
+For more details, refer to the [DigiCert​​®​​ Trust Lifecycle Manager API documentation](https://stage.one.digicert.com/mpki/docs/swagger-ui/index.html#/Inventory) or enable Terraform debugging:
   ```
   TF_LOG=DEBUG terraform apply
   ```
