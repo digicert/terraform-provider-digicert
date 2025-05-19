@@ -33,46 +33,46 @@ jobs:
           go mod tidy
           go build -o terraform-provider-digicert
 
-  #     - name: 📁 Move Plugin to Terraform Plugin Directory
-  #       run: |
-  #         PLUGIN_DIR="${GOPATH}/bin/digicert.com/terraform/digicert/0.1.0/linux_amd64"
-  #         mkdir -p "$PLUGIN_DIR"
-  #         cp terraform-provider-digicert "$PLUGIN_DIR/"
+      - name: 📁 Move Plugin to Terraform Plugin Directory
+        run: |
+          PLUGIN_DIR="${GOPATH}/bin/digicert.com/terraform/digicert/0.1.0/linux_amd64"
+          mkdir -p "$PLUGIN_DIR"
+          cp terraform-provider-digicert "$PLUGIN_DIR/"
 
-  #     - name: 🌍 Install Terraform (Linux)
-  #       run: |
-  #         wget https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_linux_amd64.zip
-  #         unzip terraform_1.11.4_linux_amd64.zip
-  #         sudo mv terraform /usr/local/bin/
-  #         terraform version
+      - name: 🌍 Install Terraform (Linux)
+        run: |
+          wget https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_linux_amd64.zip
+          unzip terraform_1.11.4_linux_amd64.zip
+          sudo mv terraform /usr/local/bin/
+          terraform version
 
-  #     - name: 🔄 Checkout Automation Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: digicert/DigicertTerraformTests
-  #         path: DigicertTerraformTests
-  #         token: ${{ secrets.QA_TOKEN }}
-  #         ref: master
+      - name: 🔄 Checkout Automation Repo
+        uses: actions/checkout@v3
+        with:
+          repository: digicert/DigicertTerraformTests
+          path: DigicertTerraformTests
+          token: ${{ secrets.QA_TOKEN }}
+          ref: master
 
-  #     - name: 📤 Copy Provider Binary to Automation Repo Root
-  #       run: cp terraform-provider-digicert DigicertTerraformTests/
+      - name: 📤 Copy Provider Binary to Automation Repo Root
+        run: cp terraform-provider-digicert DigicertTerraformTests/
 
-  #     - name: ☕ Set up Java
-  #       uses: actions/setup-java@v3
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: '17'
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  #     - name: 🧪 Run Maven Automation Tests
-  #       id: maven-test
-  #       working-directory: DigicertTerraformTests
-  #       run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-  #       continue-on-error: true
+      - name: 🧪 Run Maven Automation Tests
+        id: maven-test
+        working-directory: DigicertTerraformTests
+        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+        continue-on-error: true
         
-  #     - name: 🧪 Re-Run failed Tests
-  #       working-directory: DigicertTerraformTests
-  #       run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-  #       if: failure()
+      - name: 🧪 Re-Run failed Tests
+        working-directory: DigicertTerraformTests
+        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+        if: failure()
 
   # windows-test:
   #   needs: ubuntu-test
