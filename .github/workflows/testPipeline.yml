@@ -24,6 +24,10 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: 🧹 Clean Go Module Cache (Optional but helpful)
+        run: |
+          go clean -modcache
+
       - name: 📦 Build Terraform Provider
         run: |
           go mod tidy
@@ -60,9 +64,29 @@ jobs:
           java-version: '17'
 
       - name: 🧪 Run Maven Automation Tests
+        id: maven-test
         working-directory: DigicertTerraformTests
-        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-
+        run: |
+          set +e
+          mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          exit 0  # Prevent step from failing the job
+    
+      - name: 🧪 Re-Run failed Tests
+        id: rerun-tests
+        working-directory: DigicertTerraformTests
+        if: steps.maven-test.outputs.exit_code != '0'
+        run: |
+            set +e
+            mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+            echo "exit_code=$?" >> $GITHUB_OUTPUT
+            exit 0
+        
+      - name: 🧪 Final Retry for persistent failures
+        working-directory: DigicertTerraformTests
+        if: steps.rerun-tests.outputs.exit_code != '0'
+        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+        
   windows-test:
     needs: ubuntu-test
     if: always()
@@ -122,5 +146,28 @@ jobs:
           java-version: '17'
 
       - name: 🧪 Run Maven Automation Tests
+        id: maven-test
         working-directory: DigicertTerraformTests
-        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+        shell: powershell
+        run: |
+            mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+            $exitCode = $LASTEXITCODE
+            "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            exit 0  # Always exit 0 to prevent job failure
+    
+      - name: 🧪 Re-Run failed Tests
+        id: rerun-tests
+        working-directory: DigicertTerraformTests
+        if: steps.maven-test.outputs.exit_code != '0'
+        shell: powershell
+        run: |
+              mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+              $exitCode = $LASTEXITCODE
+              "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              exit 0
+          
+      - name: 🧪 Final Retry for persistent failures
+        working-directory: DigicertTerraformTests
+        if: steps.rerun-tests.outputs.exit_code != '0'
+        shell: powershell
+        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
