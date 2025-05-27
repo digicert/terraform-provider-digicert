@@ -173,7 +173,7 @@ jobs:
   #       run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
 
   macos-test:
-    runs-on: macos-latest
+    runs-on: macos-13
     continue-on-error: true
     env:
       GOPATH: ${{ github.workspace }}/go
