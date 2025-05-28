@@ -10,248 +10,248 @@ permissions:
   contents: read
 
 jobs:
-  # ubuntu-test:
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true
-  #   env:
-  #     GOPATH: ${{ github.workspace }}/go
-  #   steps:
-  #     - name: 🔄 Checkout Terraform Provider Repo
-  #       uses: actions/checkout@v3
+  ubuntu-test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      GOPATH: ${{ github.workspace }}/go
+    steps:
+      - name: 🔄 Checkout Terraform Provider Repo
+        uses: actions/checkout@v3
 
-  #     - name: ⚙️ Set up Go
-  #       uses: actions/setup-go@v4
-  #       with:
-  #         go-version: '1.21'
+      - name: ⚙️ Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
 
-  #     - name: 🧹 Clean Go Module Cache (Optional but helpful)
-  #       run: |
-  #         go clean -modcache
+      - name: 🧹 Clean Go Module Cache (Optional but helpful)
+        run: |
+          go clean -modcache
 
-  #     - name: 📦 Build Terraform Provider
-  #       run: |
-  #         go mod tidy
-  #         go build -o terraform-provider-digicert
+      - name: 📦 Build Terraform Provider
+        run: |
+          go mod tidy
+          go build -o terraform-provider-digicert
 
-  #     - name: 📁 Move Plugin to Terraform Plugin Directory
-  #       run: |
-  #         PLUGIN_DIR="${GOPATH}/bin/digicert.com/terraform/digicert/0.1.0/linux_amd64"
-  #         mkdir -p "$PLUGIN_DIR"
-  #         cp terraform-provider-digicert "$PLUGIN_DIR/"
+      - name: 📁 Move Plugin to Terraform Plugin Directory
+        run: |
+          PLUGIN_DIR="${GOPATH}/bin/digicert.com/terraform/digicert/0.1.0/linux_amd64"
+          mkdir -p "$PLUGIN_DIR"
+          cp terraform-provider-digicert "$PLUGIN_DIR/"
 
-  #     - name: 🌍 Install Terraform (Linux)
-  #       run: |
-  #         wget https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_linux_amd64.zip
-  #         unzip terraform_1.11.4_linux_amd64.zip
-  #         sudo mv terraform /usr/local/bin/
-  #         terraform version
+      - name: 🌍 Install Terraform (Linux)
+        run: |
+          wget https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_linux_amd64.zip
+          unzip terraform_1.11.4_linux_amd64.zip
+          sudo mv terraform /usr/local/bin/
+          terraform version
 
-  #     - name: 🔄 Checkout Automation Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: digicert/DigicertTerraformTests
-  #         path: DigicertTerraformTests
-  #         token: ${{ secrets.QA_TOKEN }}
-  #         ref: master
+      - name: 🔄 Checkout Automation Repo
+        uses: actions/checkout@v3
+        with:
+          repository: digicert/DigicertTerraformTests
+          path: DigicertTerraformTests
+          token: ${{ secrets.QA_TOKEN }}
+          ref: master
 
-  #     - name: 📤 Copy Provider Binary to Automation Repo Root
-  #       run: cp terraform-provider-digicert DigicertTerraformTests/
+      - name: 📤 Copy Provider Binary to Automation Repo Root
+        run: cp terraform-provider-digicert DigicertTerraformTests/
 
-  #     - name: ☕ Set up Java
-  #       uses: actions/setup-java@v3
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: '17'
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  #     - name: 🧪 Run Maven Automation Tests
-  #       id: maven-test
-  #       working-directory: DigicertTerraformTests
-  #       run: |
-  #         set +e
-  #         mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-  #         echo "exit_code=$?" >> $GITHUB_OUTPUT
-  #         exit 0  # Prevent step from failing the job
+      - name: 🧪 Run Maven Automation Tests
+        id: maven-test
+        working-directory: DigicertTerraformTests
+        run: |
+          set +e
+          mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          exit 0  # Prevent step from failing the job
     
-  #     - name: 🧪 Re-Run failed Tests
-  #       id: rerun-tests
-  #       working-directory: DigicertTerraformTests
-  #       if: steps.maven-test.outputs.exit_code != '0'
-  #       run: |
-  #           set +e
-  #           mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-  #           echo "exit_code=$?" >> $GITHUB_OUTPUT
-  #           exit 0
+      - name: 🧪 Re-Run failed Tests
+        id: rerun-tests
+        working-directory: DigicertTerraformTests
+        if: steps.maven-test.outputs.exit_code != '0'
+        run: |
+            set +e
+            mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+            echo "exit_code=$?" >> $GITHUB_OUTPUT
+            exit 0
         
-  #     - name: 🧪 Final Retry for persistent failures
-  #       working-directory: DigicertTerraformTests
-  #       if: steps.rerun-tests.outputs.exit_code != '0'
-  #       run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+      - name: 🧪 Final Retry for persistent failures
+        working-directory: DigicertTerraformTests
+        if: steps.rerun-tests.outputs.exit_code != '0'
+        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
         
-  # windows-test:
-  #   # needs: ubuntu-test
-  #   if: always()
-  #   runs-on: windows-latest
-  #   continue-on-error: true
-  #   env:
-  #     GOPATH: ${{ github.workspace }}/go
-  #   steps:
-  #     - name: 🔄 Checkout Terraform Provider Repo
-  #       uses: actions/checkout@v3
+  windows-test:
+    # needs: ubuntu-test
+    if: always()
+    runs-on: windows-latest
+    continue-on-error: true
+    env:
+      GOPATH: ${{ github.workspace }}/go
+    steps:
+      - name: 🔄 Checkout Terraform Provider Repo
+        uses: actions/checkout@v3
 
-  #     - name: ⚙️ Set up Go
-  #       uses: actions/setup-go@v4
-  #       with:
-  #         go-version: '1.21'
+      - name: ⚙️ Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
 
-  #     - name: 📦 Build Terraform Provider (Windows)
-  #       shell: powershell
-  #       run: |
-  #         $env:GOOS="windows"
-  #         $env:GOARCH="amd64"
-  #         $env:CGO_ENABLED="0"
-  #         go build -o terraform-provider-digicert.exe
+      - name: 📦 Build Terraform Provider (Windows)
+        shell: powershell
+        run: |
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          $env:CGO_ENABLED="0"
+          go build -o terraform-provider-digicert.exe
 
-  #     - name: 📥 Copy Provider Binary to Terraform plugin path
-  #       shell: powershell
-  #       run: |
-  #         $pluginDir = "$env:APPDATA\terraform.d\plugins\digicert.com\terraform\digicert\1.0.0\windows_amd64"
-  #         New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
-  #         Copy-Item -Path "terraform-provider-digicert.exe" -Destination "$pluginDir"
+      - name: 📥 Copy Provider Binary to Terraform plugin path
+        shell: powershell
+        run: |
+          $pluginDir = "$env:APPDATA\terraform.d\plugins\digicert.com\terraform\digicert\1.0.0\windows_amd64"
+          New-Item -ItemType Directory -Path $pluginDir -Force | Out-Null
+          Copy-Item -Path "terraform-provider-digicert.exe" -Destination "$pluginDir"
 
-  #     - name: 🪟 Install Terraform
-  #       shell: powershell
-  #       run: |
-  #         $TerraformDir = "$env:USERPROFILE\terraform"
-  #         New-Item -ItemType Directory -Path $TerraformDir -Force | Out-Null
-  #         Invoke-WebRequest -Uri "https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_windows_amd64.zip" -OutFile "$TerraformDir\terraform.zip"
-  #         Expand-Archive -Path "$TerraformDir\terraform.zip" -DestinationPath $TerraformDir
-  #         echo "$TerraformDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-  #         & "$TerraformDir\terraform.exe" version
+      - name: 🪟 Install Terraform
+        shell: powershell
+        run: |
+          $TerraformDir = "$env:USERPROFILE\terraform"
+          New-Item -ItemType Directory -Path $TerraformDir -Force | Out-Null
+          Invoke-WebRequest -Uri "https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_windows_amd64.zip" -OutFile "$TerraformDir\terraform.zip"
+          Expand-Archive -Path "$TerraformDir\terraform.zip" -DestinationPath $TerraformDir
+          echo "$TerraformDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & "$TerraformDir\terraform.exe" version
 
-  #     - name: 🔄 Checkout Automation Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: digicert/DigicertTerraformTests
-  #         path: DigicertTerraformTests
-  #         token: ${{ secrets.QA_TOKEN }}
-  #         ref: master
+      - name: 🔄 Checkout Automation Repo
+        uses: actions/checkout@v3
+        with:
+          repository: digicert/DigicertTerraformTests
+          path: DigicertTerraformTests
+          token: ${{ secrets.QA_TOKEN }}
+          ref: master
 
-  #     - name: 📤 Copy Provider Binary to Automation Repo Root
-  #       shell: powershell
-  #       run: Copy-Item terraform-provider-digicert.exe DigicertTerraformTests\
+      - name: 📤 Copy Provider Binary to Automation Repo Root
+        shell: powershell
+        run: Copy-Item terraform-provider-digicert.exe DigicertTerraformTests\
 
-  #     - name: ☕ Set up Java
-  #       uses: actions/setup-java@v3
-  #       with:
-  #         distribution: 'temurin'
-  #         java-version: '17'
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  #     - name: 🧪 Run Maven Automation Tests
-  #       id: maven-test
-  #       working-directory: DigicertTerraformTests
-  #       shell: powershell
-  #       run: |
-  #           mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-  #           $exitCode = $LASTEXITCODE
-  #           "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-  #           exit 0  # Always exit 0 to prevent job failure
+      - name: 🧪 Run Maven Automation Tests
+        id: maven-test
+        working-directory: DigicertTerraformTests
+        shell: powershell
+        run: |
+            mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+            $exitCode = $LASTEXITCODE
+            "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            exit 0  # Always exit 0 to prevent job failure
     
-  #     - name: 🧪 Re-Run failed Tests
-  #       id: rerun-tests
-  #       working-directory: DigicertTerraformTests
-  #       if: steps.maven-test.outputs.exit_code != '0'
-  #       shell: powershell
-  #       run: |
-  #             mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-  #             $exitCode = $LASTEXITCODE
-  #             "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-  #             exit 0
+      - name: 🧪 Re-Run failed Tests
+        id: rerun-tests
+        working-directory: DigicertTerraformTests
+        if: steps.maven-test.outputs.exit_code != '0'
+        shell: powershell
+        run: |
+              mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+              $exitCode = $LASTEXITCODE
+              "exit_code=$exitCode" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              exit 0
           
-  #     - name: 🧪 Final Retry for persistent failures
-  #       working-directory: DigicertTerraformTests
-  #       if: steps.rerun-tests.outputs.exit_code != '0'
-  #       shell: powershell
-  #       run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+      - name: 🧪 Final Retry for persistent failures
+        working-directory: DigicertTerraformTests
+        if: steps.rerun-tests.outputs.exit_code != '0'
+        shell: powershell
+        run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
 
-  # macos-test:
-  #         runs-on: macos-13
-  #         if: always()
-  #         continue-on-error: true
-  #         env:
-  #           GOPATH: ${{ github.workspace }}/go
-  #         steps:
-  #           - name: 🔄 Checkout Terraform Provider Repo
-  #             uses: actions/checkout@v3
-      
-  #           - name: ⚙️ Set up Go
-  #             uses: actions/setup-go@v4
-  #             with:
-  #               go-version: '1.21'
-      
-  #           - name: 🧹 Clean Go Module Cache (Optional but helpful)
-  #             run: |
-  #               go clean -modcache
-      
-  #           - name: 📦 Build Terraform Provider
-  #             run: |
-  #               go mod tidy
-  #               go build -o terraform-provider-digicert
-      
-  #           - name: 📁 Move Plugin to Terraform Plugin Directory
-  #             run: |
-  #               PLUGIN_DIR="${GOPATH}/bin/digicert.com/terraform/digicert/0.1.0/darwin_amd64"
-  #               mkdir -p "$PLUGIN_DIR"
-  #               cp terraform-provider-digicert "$PLUGIN_DIR/"
-      
-  #           - name: 🌍 Install Terraform (macOS)
-  #             run: |
-  #               curl -LO https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_darwin_amd64.zip
-  #               unzip terraform_1.11.4_darwin_amd64.zip
-  #               mv terraform /usr/local/bin/
-  #               terraform version
-      
-  #           - name: 🔄 Checkout Automation Repo
-  #             uses: actions/checkout@v3
-  #             with:
-  #               repository: digicert/DigicertTerraformTests
-  #               path: DigicertTerraformTests
-  #               token: ${{ secrets.QA_TOKEN }}
-  #               ref: master
-      
-  #           - name: 📤 Copy Provider Binary to Automation Repo Root
-  #             run: cp terraform-provider-digicert DigicertTerraformTests/
-      
-  #           - name: ☕ Set up Java
-  #             uses: actions/setup-java@v3
-  #             with:
-  #               distribution: 'temurin'
-  #               java-version: '17'
-      
-  #           - name: 🧪 Run Maven Automation Tests
-  #             id: maven-test
-  #             working-directory: DigicertTerraformTests
-  #             run: |
-  #               set +e
-  #               mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
-  #               echo "exit_code=$?" >> $GITHUB_OUTPUT
-  #               exit 0  # Prevent step from failing the job
-          
-  #           - name: 🧪 Re-Run failed Tests
-  #             id: rerun-tests
-  #             working-directory: DigicertTerraformTests
-  #             if: steps.maven-test.outputs.exit_code != '0'
-  #             run: |
-  #               set +e
-  #               mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-  #               echo "exit_code=$?" >> $GITHUB_OUTPUT
-  #               exit 0
-      
-  #           - name: 🧪 Final Retry for persistent failures
-  #             working-directory: DigicertTerraformTests
-  #             if: steps.rerun-tests.outputs.exit_code != '0'
-  #             run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
-      
   macosAmd-test:
+          runs-on: macos-13
+          if: always()
+          continue-on-error: true
+          env:
+            GOPATH: ${{ github.workspace }}/go
+          steps:
+            - name: 🔄 Checkout Terraform Provider Repo
+              uses: actions/checkout@v3
+      
+            - name: ⚙️ Set up Go
+              uses: actions/setup-go@v4
+              with:
+                go-version: '1.21'
+      
+            - name: 🧹 Clean Go Module Cache (Optional but helpful)
+              run: |
+                go clean -modcache
+      
+            - name: 📦 Build Terraform Provider
+              run: |
+                go mod tidy
+                go build -o terraform-provider-digicert
+      
+            - name: 📁 Move Plugin to Terraform Plugin Directory
+              run: |
+                PLUGIN_DIR="${GOPATH}/bin/digicert.com/terraform/digicert/0.1.0/darwin_amd64"
+                mkdir -p "$PLUGIN_DIR"
+                cp terraform-provider-digicert "$PLUGIN_DIR/"
+      
+            - name: 🌍 Install Terraform (macOS)
+              run: |
+                curl -LO https://releases.hashicorp.com/terraform/1.11.4/terraform_1.11.4_darwin_amd64.zip
+                unzip terraform_1.11.4_darwin_amd64.zip
+                mv terraform /usr/local/bin/
+                terraform version
+      
+            - name: 🔄 Checkout Automation Repo
+              uses: actions/checkout@v3
+              with:
+                repository: digicert/DigicertTerraformTests
+                path: DigicertTerraformTests
+                token: ${{ secrets.QA_TOKEN }}
+                ref: master
+      
+            - name: 📤 Copy Provider Binary to Automation Repo Root
+              run: cp terraform-provider-digicert DigicertTerraformTests/
+      
+            - name: ☕ Set up Java
+              uses: actions/setup-java@v3
+              with:
+                distribution: 'temurin'
+                java-version: '17'
+      
+            - name: 🧪 Run Maven Automation Tests
+              id: maven-test
+              working-directory: DigicertTerraformTests
+              run: |
+                set +e
+                mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=testng.xml"
+                echo "exit_code=$?" >> $GITHUB_OUTPUT
+                exit 0  # Prevent step from failing the job
+          
+            - name: 🧪 Re-Run failed Tests
+              id: rerun-tests
+              working-directory: DigicertTerraformTests
+              if: steps.maven-test.outputs.exit_code != '0'
+              run: |
+                set +e
+                mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+                echo "exit_code=$?" >> $GITHUB_OUTPUT
+                exit 0
+      
+            - name: 🧪 Final Retry for persistent failures
+              working-directory: DigicertTerraformTests
+              if: steps.rerun-tests.outputs.exit_code != '0'
+              run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
+      
+  macosArm-test:
           runs-on: macos-latest
           if: always()
           continue-on-error: true
