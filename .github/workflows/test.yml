@@ -60,28 +60,18 @@ jobs:
             mv terraform /usr/local/bin/ &&
             terraform version
 
-            echo '⬇ Downloading Maven 3.9.6...'
-            curl -sSL https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz -o maven.tar.gz
+            echo "📦 Downloading Apache Maven 3.9.6..."
+            curl -sSL https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz -o maven.tar.gz
 
-            echo '📦 Extracting Maven...'
+            echo "📂 Extracting Maven..."
             tar -xzf maven.tar.gz
-
-            # Set correct MAVEN_HOME
             export MAVEN_HOME="$PWD/apache-maven-3.9.6"
             export PATH="$MAVEN_HOME/bin:$PATH"
 
-            echo "📁 Maven directory: $MAVEN_HOME"
-            echo "📁 ls -l $MAVEN_HOME"
-            ls -l "$MAVEN_HOME"
-
-            echo "📁 ls -l $MAVEN_HOME/lib"
-            ls -l "$MAVEN_HOME/lib" | head -n 10
-
-            echo "🔍 Which mvn?"
+            echo "🔍 Verifying mvn location..."
             which mvn
-
-            echo "🚀 Running mvn -version"
-            mvn -version || echo "❌ mvn failed"
+            echo "🚀 Maven version:"
+            mvn -version
 
             echo '🔄 Cloning automation test repo...'
             git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
