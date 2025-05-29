@@ -25,68 +25,51 @@ jobs:
       - name: 🔄 Checkout Terraform Provider Repository
         uses: actions/checkout@v3
 
-      - name: 🚀 Run Terraform build & tests inside linux/386 container
+      - name: 🚀 Run Terraform build & tests inside prebuilt Maven+JDK container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "$(cat <<'EOF'
-            set -e
-
-            echo '📦 Installing dependencies...'
-            apt-get update && \
-            apt-get install -y wget unzip git openjdk-17-jdk curl tar || \
-            (apt-get update --fix-missing && apt-get install -y wget unzip git openjdk-17-jdk curl tar)
-
-            echo '📥 Installing Go 1.22.3...'
-            curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
-            tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
-            export PATH=/usr/local/go/bin:$PATH &&
-            export GOPATH=/workspace/go &&
-            mkdir -p "$GOPATH" &&
-            export PATH="$PATH:$GOPATH/bin" &&
-            export GOARCH=386 &&
-            export GOOS=linux &&
-            go version
-
-            echo '🛠 Tidying and building Terraform provider...'
-            cd /workspace &&
-            sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
-            go mod tidy &&
-            go build -o terraform-provider-digicert &&
-            mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
-            cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
-
-            echo '⬇ Installing Terraform 1.1.4...'
-            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
-            unzip terraform_1.1.4_linux_386.zip &&
-            mv terraform /usr/local/bin/ &&
-            terraform version
-
-            echo "📦 Downloading Apache Maven 3.6.3..."
-            curl -sSL https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -o apache-maven-3.6.3-bin.tar.gz
-
-            echo "📂 Extracting Maven..."
-            tar -xzf apache-maven-3.6.3-bin.tar.gz
-
-            echo "🔧 Setting up MAVEN_HOME and PATH..."
-            export MAVEN_HOME="$PWD/apache-maven-3.6.3"
-            export PATH="$MAVEN_HOME/bin:$PATH"
-
-            echo "🔍 mvn location: $(which mvn)"
-            echo "🚀 mvn version output:"
-            mvn -version
-
-            echo '🔄 Cloning automation test repo...'
-            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
-            cd DigicertTerraformTests
-
-            echo '▶ Running initial Maven test suite...'
-            if ! mvn clean test -DsuiteXmlFile=testng.xml; then
-              echo '⚠ Initial test failed, attempting rerun with failure.xml...'
-              if ! mvn test -DsuiteXmlFile=failure.xml; then
-                echo '❌ Final rerun also failed. Exiting with failure.'
-                exit 1
-              fi
-            fi
-
-            echo '✅ Tests completed successfully.'
-          EOF
-          )"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
+            maven:3.6.3-jdk-8 bash -c "$(cat <<'EOF'
+              set -e
+      
+              echo '📥 Installing additional deps...'
+              apt-get update && apt-get install -y wget unzip git curl tar
+      
+              echo '📥 Installing Go 1.22.3...'
+              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
+              tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
+              export PATH=/usr/local/go/bin:$PATH &&
+              export GOPATH=/workspace/go &&
+              mkdir -p "$GOPATH" &&
+              export PATH="$PATH:$GOPATH/bin" &&
+              export GOARCH=386 &&
+              export GOOS=linux &&
+              go version
+      
+              echo '🛠 Building Terraform provider...'
+              cd /workspace &&
+              sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
+              go mod tidy &&
+              go build -o terraform-provider-digicert &&
+              mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
+              cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
+      
+              echo '⬇ Installing Terraform 1.1.4...'
+              wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
+              unzip terraform_1.1.4_linux_386.zip &&
+              mv terraform /usr/local/bin/ &&
+              terraform version
+      
+              echo '🔄 Cloning automation test repo...'
+              git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
+              cd DigicertTerraformTests
+      
+              echo '▶ Running tests...'
+              mvn clean test -DsuiteXmlFile=testng.xml || \
+              mvn test -DsuiteXmlFile=failure.xml || \
+              (echo '❌ All attempts failed.' && exit 1)
+      
+              echo '✅ Tests completed successfully.'
+            EOF
+            )"
+      
