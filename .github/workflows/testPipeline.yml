@@ -88,6 +88,7 @@ jobs:
         run: mvn clean test "-Dsurefire.forkCount=1" "-Dsurefire.reuseForks=false" "-DsuiteXmlFile=failure.xml"
         
   windows-test:
+    # needs: ubuntu-test
     if: always()
     runs-on: windows-latest
     continue-on-error: true
