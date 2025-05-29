@@ -62,8 +62,12 @@ jobs:
             echo '⬇ Installing Maven 3.9.6...'
             curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
             tar -xzf apache-maven-3.9.6-bin.tar.gz &&
+            mv apache-maven-3.9.6 /workspace/apache-maven-3.9.6 &&
             export MAVEN_HOME=/workspace/apache-maven-3.9.6 &&
             export PATH="$MAVEN_HOME/bin:$PATH" &&
+            echo "Maven home: $MAVEN_HOME" &&
+            ls -l "$MAVEN_HOME" &&
+            ls -l "$MAVEN_HOME/bin" &&
             mvn -version
 
             echo '🔄 Cloning automation test repo...'
