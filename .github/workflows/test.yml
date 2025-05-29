@@ -60,14 +60,14 @@ jobs:
             mv terraform /usr/local/bin/ &&
             terraform version
 
-            echo "📦 Downloading Apache Maven 3.9.6..."
-            curl -sSL https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz -o apache-maven-3.9.6-bin.tar.gz
+            echo "📦 Downloading Apache Maven 3.6.3..."
+            curl -sSL https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -o apache-maven-3.6.3-bin.tar.gz
 
             echo "📂 Extracting Maven..."
-            tar -xzf apache-maven-3.9.6-bin.tar.gz
+            tar -xzf apache-maven-3.6.3-bin.tar.gz
 
             echo "🔧 Setting up MAVEN_HOME and PATH..."
-            export MAVEN_HOME="$PWD/apache-maven-3.9.6"
+            export MAVEN_HOME="$PWD/apache-maven-3.6.3"
             export PATH="$MAVEN_HOME/bin:$PATH"
 
             echo "🔍 mvn location: $(which mvn)"
