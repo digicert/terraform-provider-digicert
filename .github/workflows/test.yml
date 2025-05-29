@@ -63,18 +63,16 @@ jobs:
             echo '⬇ Installing Maven 3.9.6...'
             curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
             tar -xzf apache-maven-3.9.6-bin.tar.gz &&
-            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 &&
-            export PATH="$MAVEN_HOME/bin:$PATH" &&
-            mvn -version
+            MAVEN_HOME=/workspace/apache-maven-3.9.6 PATH="$MAVEN_HOME/bin:$PATH" mvn -version
 
             echo '🔄 Cloning automation test repo...'
             git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
             cd DigicertTerraformTests
 
             echo '▶ Running initial Maven test suite...'
-            if ! mvn clean test -DsuiteXmlFile=testng.xml; then
+            if ! MAVEN_HOME=/workspace/apache-maven-3.9.6 PATH="$MAVEN_HOME/bin:$PATH" mvn clean test -DsuiteXmlFile=testng.xml; then
               echo '⚠ Initial test failed, attempting rerun with failure.xml...'
-              if ! mvn test -DsuiteXmlFile=failure.xml; then
+              if ! MAVEN_HOME=/workspace/apache-maven-3.9.6 PATH="$MAVEN_HOME/bin:$PATH" mvn test -DsuiteXmlFile=failure.xml; then
                 echo '❌ Final rerun also failed. Exiting with failure.'
                 exit 1
               fi
