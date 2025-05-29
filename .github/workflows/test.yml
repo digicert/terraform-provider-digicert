@@ -61,16 +61,17 @@ jobs:
             terraform version
 
             echo "📦 Downloading Apache Maven 3.9.6..."
-            curl -sSL https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz -o maven.tar.gz
+            curl -sSL https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz -o apache-maven-3.9.6-bin.tar.gz
 
             echo "📂 Extracting Maven..."
-            tar -xzf maven.tar.gz
+            tar -xzf apache-maven-3.9.6-bin.tar.gz
+
+            echo "🔧 Setting up MAVEN_HOME and PATH..."
             export MAVEN_HOME="$PWD/apache-maven-3.9.6"
             export PATH="$MAVEN_HOME/bin:$PATH"
 
-            echo "🔍 Verifying mvn location..."
-            which mvn
-            echo "🚀 Maven version:"
+            echo "🔍 mvn location: $(which mvn)"
+            echo "🚀 mvn version output:"
             mvn -version
 
             echo '🔄 Cloning automation test repo...'
