@@ -26,62 +26,58 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 🚀 Run Terraform build & tests inside linux/386 container
-        env:
-          QA_TOKEN: ${{ secrets.QA_TOKEN }}
         run: |
-          docker run --rm -e QA_TOKEN=$QA_TOKEN -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
             set -e
 
+            echo '📦 Installing dependencies...'
             apt-get update &&
-            apt-get install -y wget unzip git openjdk-17-jdk golang tar &&
+            apt-get install -y wget unzip git openjdk-17-jdk curl tar
 
-            # Install Maven manually
-            wget https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
-            tar xzvf apache-maven-3.9.6-bin.tar.gz &&
-            export MAVEN_HOME=\$PWD/apache-maven-3.9.6 &&
-            export PATH=\$MAVEN_HOME/bin:\$PATH &&
-
-            # Install Go
-            wget https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
+            echo '📥 Installing Go 1.22.3...'
+            curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
             tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
-            export PATH=\$PATH:/usr/local/go/bin &&
-            go version &&
-
+            export PATH=/usr/local/go/bin:\$PATH &&
             export GOPATH=/workspace/go &&
             mkdir -p \$GOPATH &&
             export PATH=\$PATH:/workspace &&
             export GOARCH=386 &&
             export GOOS=linux &&
-
             cd /workspace &&
+            go version
+
+            echo '🛠 Tidying and building Terraform provider...'
+            sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
             go mod tidy &&
             go build -o terraform-provider-digicert &&
             mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
-            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
+            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386
 
+            echo '⬇ Installing Terraform 1.1.4...'
             wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
             unzip terraform_1.1.4_linux_386.zip &&
             mv terraform /usr/local/bin/ &&
-            terraform version &&
-            echo '✅ Terraform provider build complete.'
+            terraform version
+
+            echo '⬇ Installing Maven 3.9.6...'
+            curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
+            tar -xzf apache-maven-3.9.6-bin.tar.gz &&
+            export MAVEN_HOME=\$PWD/apache-maven-3.9.6 &&
+            export PATH=\$MAVEN_HOME/bin:\$PATH &&
+            mvn -version
 
             echo '🔄 Cloning automation test repo...'
             git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
-            cd DigicertTerraformTests &&
+            cd DigicertTerraformTests
 
             echo '▶ Running initial Maven test suite...'
-
-            if ! java -cp \"\$MAVEN_HOME/boot/plexus-classworlds-*.jar:\$MAVEN_HOME/lib/*\" \
-              -Dclassworlds.conf=\$MAVEN_HOME/bin/m2.conf \
-              -Dmaven.home=\$MAVEN_HOME \
-              org.codehaus.plexus.classworlds.launcher.Launcher clean test -DsuiteXmlFile=testng.xml; then
-              echo '⚠ Initial test failed, attempting rerun with failure.xml...' &&
-              if ! java -cp \"\$MAVEN_HOME/boot/plexus-classworlds-*.jar:\$MAVEN_HOME/lib/*\" \
-                -Dclassworlds.conf=\$MAVEN_HOME/bin/m2.conf \
-                -Dmaven.home=\$MAVEN_HOME \
-                org.codehaus.plexus.classworlds.launcher.Launcher test -DsuiteXmlFile=failure.xml; then
-                echo '❌ Final rerun also failed. Exiting with failure.' &&
+            if ! mvn clean test -DsuiteXmlFile=testng.xml; then
+              echo '⚠ Initial test failed, attempting rerun with failure.xml...'
+              if ! mvn test -DsuiteXmlFile=failure.xml; then
+                echo '❌ Final rerun also failed. Exiting with failure.'
                 exit 1
               fi
             fi
+
+            echo '✅ Tests completed successfully.'
           "
