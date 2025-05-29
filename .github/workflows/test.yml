@@ -34,9 +34,8 @@ jobs:
             i386/debian:bullseye bash -c "
               set -e
       
-              # Update & install all necessary packages
-              apt-get update && apt-get install -y \
-                wget unzip curl git openjdk-17-jdk tar
+              # Update & install necessary packages
+              apt-get update && apt-get install -y wget unzip curl git openjdk-17-jdk tar
       
               # Install Go
               curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz
@@ -46,14 +45,14 @@ jobs:
               # Fix go.mod Go version if needed
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod
       
-              # Fix invalid Go import paths with '@version' (remove '@version' suffix)
+              # Fix invalid Go import paths by removing '@version' suffix
               echo '🔍 Fixing invalid Go import paths...'
-              find . -name '*.go' -exec sed -i -E 's@(@[0-9]+\.[0-9]+(\.[0-9]+)?)@@g' {} +
+              find . -name '*.go' -exec sed -i -E 's#(@[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-z0-9]+)?)##g' {} +
       
-              # Run go mod tidy
+              # Tidy go modules
               /usr/local/go/bin/go mod tidy
       
-              # Build provider binary
+              # Build the provider
               mkdir -p /workspace/go
               /usr/local/go/bin/go build -o terraform-provider-digicert
       
@@ -70,10 +69,10 @@ jobs:
               # Verify Maven installation
               apache-maven-3.9.6/bin/mvn -version
       
-              # Clone the test repository using the secret token
+              # Clone the test repository
               git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git
       
-              # Run Maven tests with retry on failure.xml
+              # Run Maven tests with retry logic
               cd DigicertTerraformTests
               if ! apache-maven-3.9.6/bin/mvn clean test -DsuiteXmlFile=testng.xml; then
                 echo '⚠️ Test failed. Retrying with failure.xml...'
@@ -85,5 +84,4 @@ jobs:
       
               echo '✅ All tests passed.'
             "
-      
       
