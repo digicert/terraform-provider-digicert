@@ -62,7 +62,8 @@ jobs:
 
               echo '🔄 Cloning automation test repo...'
               git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
-              cd DigicertTerraformTests
+              cd DigicertTerraformTests &&
+              git checkout javaVersionFix
 
               echo '▶ Running tests...'
               mvn clean test -DsuiteXmlFile=testng.xml || \
