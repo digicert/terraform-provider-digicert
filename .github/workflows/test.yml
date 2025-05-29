@@ -64,8 +64,8 @@ jobs:
             curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
             tar -xzf apache-maven-3.9.6-bin.tar.gz &&
 
-            # Set MAVEN_HOME and update PATH
-            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6
+            # ✅ Correct MAVEN_HOME path
+            export MAVEN_HOME=/workspace/apache-maven-3.9.6
             export PATH="$MAVEN_HOME/bin:$PATH"
 
             # 🔍 Debug info
@@ -84,6 +84,7 @@ jobs:
             # ✅ Check Maven version
             echo "🚀 Maven version:"
             mvn -version || echo "❌ mvn failed to run"
+
 
 
             echo '🔄 Cloning automation test repo...'
