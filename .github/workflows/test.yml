@@ -67,7 +67,7 @@ jobs:
             echo '✅ Terraform provider build complete.'; \
 
             echo '🔄 Cloning automation test repo...'; \
-            git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/digicert/DigicertTerraformTests.git && \
+            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git && \
             cd DigicertTerraformTests; \
 
             echo '▶ Running initial Maven test suite...'; \
