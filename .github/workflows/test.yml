@@ -60,32 +60,28 @@ jobs:
             mv terraform /usr/local/bin/ &&
             terraform version
 
-            echo '⬇ Installing Maven 3.9.6...'
-            curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
-            tar -xzf apache-maven-3.9.6-bin.tar.gz &&
+            echo '⬇ Downloading Maven 3.9.6...'
+            curl -sSL https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz -o maven.tar.gz
 
-            # ✅ Correct MAVEN_HOME path
-            export MAVEN_HOME=/workspace/apache-maven-3.9.6
+            echo '📦 Extracting Maven...'
+            tar -xzf maven.tar.gz
+
+            # Set correct MAVEN_HOME
+            export MAVEN_HOME="$PWD/apache-maven-3.9.6"
             export PATH="$MAVEN_HOME/bin:$PATH"
 
-            # 🔍 Debug info
-            echo "🔧 Current directory:"
-            pwd
-
-            echo "📁 Listing /workspace:"
-            ls -l /workspace
-
-            echo "📁 Listing $MAVEN_HOME:"
+            echo "📁 Maven directory: $MAVEN_HOME"
+            echo "📁 ls -l $MAVEN_HOME"
             ls -l "$MAVEN_HOME"
 
-            echo "🔍 Where is mvn?"
-            which mvn || echo "❌ mvn not found"
+            echo "📁 ls -l $MAVEN_HOME/lib"
+            ls -l "$MAVEN_HOME/lib" | head -n 10
 
-            # ✅ Check Maven version
-            echo "🚀 Maven version:"
-            mvn -version || echo "❌ mvn failed to run"
+            echo "🔍 Which mvn?"
+            which mvn
 
-
+            echo "🚀 Running mvn -version"
+            mvn -version || echo "❌ mvn failed"
 
             echo '🔄 Cloning automation test repo...'
             git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
