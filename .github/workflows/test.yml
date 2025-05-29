@@ -25,61 +25,69 @@ jobs:
       - name: 🔄 Checkout Terraform Provider Repository
         uses: actions/checkout@v3
 
-      - name: 🚀 Run Terraform build & tests inside linux/386 container
+      - name: 📦 Install dependencies in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "$(cat <<'EOF'
-            set -e
-
-            echo '📦 Installing dependencies...'
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
             apt-get update && \
             apt-get install -y wget unzip git openjdk-17-jdk curl tar || \
-            (apt-get update --fix-missing && apt-get install -y wget unzip git openjdk-17-jdk curl tar)
+            (apt-get update --fix-missing && apt-get install -y wget unzip git openjdk-17-jdk curl tar)\
+          "
 
-            echo '📥 Installing Go 1.22.3...'
-            curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
-            tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
-            export PATH=/usr/local/go/bin:$PATH &&
-            export GOPATH=/workspace/go &&
-            mkdir -p "$GOPATH" &&
-            export PATH="$PATH:$GOPATH/bin" &&
-            export GOARCH=386 &&
-            export GOOS=linux &&
-            go version
+      - name: 📥 Install Go 1.22.3 in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+            curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz && \
+            tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz && \
+            echo 'Go version:' && /usr/local/go/bin/go version \
+          "
 
-            echo '🛠 Tidying and building Terraform provider...'
-            cd /workspace &&
-            sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
-            go mod tidy &&
-            go build -o terraform-provider-digicert &&
-            mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
-            cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
+      - name: 🛠 Build Terraform provider in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+            export PATH=/usr/local/go/bin:$PATH && \
+            export GOPATH=/workspace/go && mkdir -p $GOPATH && \
+            export PATH=$PATH:$GOPATH/bin && \
+            export GOARCH=386 && export GOOS=linux && \
+            sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod && \
+            go mod tidy && \
+            go build -o terraform-provider-digicert && \
+            mkdir -p $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
+            cp terraform-provider-digicert $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 \
+          "
 
-            echo '⬇ Installing Terraform 1.1.4...'
-            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
-            unzip terraform_1.1.4_linux_386.zip &&
-            mv terraform /usr/local/bin/ &&
-            terraform version
+      - name: ⬇ Install Terraform 1.1.4 in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip && \
+            unzip terraform_1.1.4_linux_386.zip && \
+            mv terraform /usr/local/bin/ && \
+            terraform version \
+          "
 
-            echo '⬇ Installing Maven 3.9.6...'
-            curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
-            tar -xzf apache-maven-3.9.6-bin.tar.gz &&
-            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 &&
-            export PATH="$MAVEN_HOME/bin:$PATH" &&
-            mvn -version
+      - name: ⬇ Install Maven 3.9.6 in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+            curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
+            tar -xzf apache-maven-3.9.6-bin.tar.gz && \
+            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 && \
+            export PATH=$MAVEN_HOME/bin:$PATH && \
+            mvn -version \
+          "
 
-            echo '🔄 Cloning automation test repo...'
-            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
-            cd DigicertTerraformTests
+      - name: 🔄 Clone automation test repo
+        run: |
+          git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git
 
-            echo '▶ Running initial Maven test suite...'
-            if ! mvn clean test -DsuiteXmlFile=testng.xml; then
-              echo '⚠ Initial test failed, attempting rerun with failure.xml...'
-              if ! mvn test -DsuiteXmlFile=failure.xml; then
-                echo '❌ Final rerun also failed. Exiting with failure.'
-                exit 1
-              fi
-            fi
-
-            echo '✅ Tests completed successfully.'
-          EOF
-          )"
+      - name: ▶ Run initial Maven test suite inside container
+        run: |
+          docker run --rm -v ${{ github.workspace }}/DigicertTerraformTests:/workspace -w /workspace -e MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 -e PATH=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6/bin:$PATH i386/debian:bullseye bash -c "\
+            set -e; \
+            if ! mvn clean test -DsuiteXmlFile=testng.xml; then \
+              echo '⚠ Initial test failed, attempting rerun with failure.xml...'; \
+              if ! mvn test -DsuiteXmlFile=failure.xml; then \
+                echo '❌ Final rerun also failed. Exiting with failure.'; \
+                exit 1; \
+              fi; \
+            fi; \
+            echo '✅ Tests completed successfully.' \
+          "
