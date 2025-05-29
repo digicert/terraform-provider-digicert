@@ -36,9 +36,12 @@ jobs:
             (apt-get update --fix-missing && apt-get install -y wget unzip git openjdk-17-jdk curl tar)\
           "
 
-      - name: 📥 Download Go 1.22.3 in container
+      - name: 📥 Download Go 1.22.3 in container (with curl install)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz"
+            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+              apt-get update && apt-get install -y curl && \
+              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz"
+        
 
       - name: 📥 Extract Go 1.22.3 in container
         run: |
