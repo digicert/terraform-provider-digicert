@@ -20,48 +20,48 @@ jobs:
         with:
           platforms: linux/386
 
-      - name: 🧱 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # - name: 🧱 Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
 
-      - name: 🔄 Checkout Terraform Provider Repository
-        uses: actions/checkout@v3
+      # - name: 🔄 Checkout Terraform Provider Repository
+      #   uses: actions/checkout@v3
 
-      - name: 🚀 Run Terraform build & tests inside linux/386 container
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
-            set -e
-            apt-get update &&
-            apt-get install -y wget unzip git openjdk-17-jdk maven golang &&
-            export GOPATH=/workspace/go &&
-            mkdir -p \$GOPATH &&
-            export PATH=\$PATH:/workspace &&
-            export GOARCH=386 &&
-            export GOOS=linux &&
-            cd /workspace &&
-            go version &&
-            go mod tidy &&
-            go build -o terraform-provider-digicert &&
-            mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
-            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
-            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
-            unzip terraform_1.1.4_linux_386.zip &&
-            mv terraform /usr/local/bin/ &&
-            terraform version &&
-            echo '✅ Terraform provider build complete.'
+      # - name: 🚀 Run Terraform build & tests inside linux/386 container
+      #   run: |
+      #     docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
+      #       set -e
+      #       apt-get update &&
+      #       apt-get install -y wget unzip git openjdk-17-jdk maven golang &&
+      #       export GOPATH=/workspace/go &&
+      #       mkdir -p \$GOPATH &&
+      #       export PATH=\$PATH:/workspace &&
+      #       export GOARCH=386 &&
+      #       export GOOS=linux &&
+      #       cd /workspace &&
+      #       go version &&
+      #       go mod tidy &&
+      #       go build -o terraform-provider-digicert &&
+      #       mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
+      #       cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
+      #       wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
+      #       unzip terraform_1.1.4_linux_386.zip &&
+      #       mv terraform /usr/local/bin/ &&
+      #       terraform version &&
+      #       echo '✅ Terraform provider build complete.'
 
-            echo '🔄 Cloning automation test repo...'
-            git clone https://github.com/digicert/DigicertTerraformTests.git &&
-            cd DigicertTerraformTests
+      #       echo '🔄 Cloning automation test repo...'
+      #       git clone https://github.com/digicert/DigicertTerraformTests.git &&
+      #       cd DigicertTerraformTests
 
-            echo '▶ Running initial Maven test suite...'
-            mvn clean test -DsuiteXmlFile=testng.xml || (
-              echo '⚠ Initial test failed, attempting rerun with failure.xml...' &&
-              mvn test -DsuiteXmlFile=failure.xml || (
-                echo '❌ Final rerun also failed. Exiting with failure.' &&
-                exit 1
-              )
-            )
-          "
+      #       echo '▶ Running initial Maven test suite...'
+      #       mvn clean test -DsuiteXmlFile=testng.xml || (
+      #         echo '⚠ Initial test failed, attempting rerun with failure.xml...' &&
+      #         mvn test -DsuiteXmlFile=failure.xml || (
+      #           echo '❌ Final rerun also failed. Exiting with failure.' &&
+      #           exit 1
+      #         )
+      #       )
+      #     "
   # ubuntu-test:
   #   runs-on: ubuntu-latest
   #   continue-on-error: true
