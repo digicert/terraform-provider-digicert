@@ -79,34 +79,53 @@ jobs:
 
       - name: ⬇ Download Terraform 1.1.4 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip"
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+                  apt-get update && apt-get install -y wget && \
+                  wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip"
+            
 
       - name: ⬇ Unzip Terraform in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "unzip terraform_1.1.4_linux_386.zip"
+            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+              apt-get update && apt-get install -y unzip && \
+              unzip terraform_1.1.4_linux_386.zip"
+                
 
       - name: ⬇ Move Terraform binary to /usr/local/bin in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "mv terraform /usr/local/bin/"
-
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+                  apt-get update && apt-get install -y unzip && \
+                  mv terraform /usr/local/bin/ && \
+                  chmod +x /usr/local/bin/terraform"
+            
       - name: ⬇ Verify Terraform installation in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "terraform version"
-
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+                  apt-get update && apt-get install -y unzip && \
+                  mv terraform /usr/local/bin/ && \
+                  terraform version"
+            
       - name: ⬇ Download Maven 3.9.6 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz"
-
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+                  apt-get update && apt-get install -y curl && \
+                  curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz"
+            
       - name: ⬇ Extract Maven 3.9.6 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "tar -xzf apache-maven-3.9.6-bin.tar.gz"
-
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+                  apt-get update && apt-get install -y tar && \
+                  tar -xzf apache-maven-3.9.6-bin.tar.gz"
+            
       - name: ⬇ Verify Maven installation in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            -e MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 \
-            -e PATH=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6/bin:$PATH \
-            i386/debian:bullseye bash -c "mvn -version"
+                    docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+                      -e MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 \
+                      -e PATH=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6/bin:$PATH \
+                      i386/debian:bullseye bash -c "\
+                        apt-get update && apt-get install -y openjdk-11-jdk && \
+                        mvn -version"
+                
 
       - name: 🔄 Clone automation test repo
         run: |
