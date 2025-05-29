@@ -63,9 +63,28 @@ jobs:
             echo '⬇ Installing Maven 3.9.6...'
             curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
             tar -xzf apache-maven-3.9.6-bin.tar.gz &&
-            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 &&
-            export PATH="$MAVEN_HOME/bin:$PATH" &&
-            mvn -version
+
+            # Set MAVEN_HOME and update PATH
+            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6
+            export PATH="$MAVEN_HOME/bin:$PATH"
+
+            # 🔍 Debug info
+            echo "🔧 Current directory:"
+            pwd
+
+            echo "📁 Listing /workspace:"
+            ls -l /workspace
+
+            echo "📁 Listing $MAVEN_HOME:"
+            ls -l "$MAVEN_HOME"
+
+            echo "🔍 Where is mvn?"
+            which mvn || echo "❌ mvn not found"
+
+            # ✅ Check Maven version
+            echo "🚀 Maven version:"
+            mvn -version || echo "❌ mvn failed to run"
+
 
             echo '🔄 Cloning automation test repo...'
             git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
