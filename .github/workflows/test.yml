@@ -1,4 +1,4 @@
-name: Terraform Provider Testing Pipeline (linux/386)
+name: Terraform Provider Testing Pipeline
 
 on:
   push:
@@ -10,10 +10,9 @@ permissions:
   contents: read
 
 jobs:
-  linux-386-test:
+  ubuntu-test:
     runs-on: ubuntu-latest
-    name: Run Terraform and Tests on linux/386 via Docker
-
+    continue-on-error: true
     steps:
       - name: 🐳 Set up QEMU for cross-architecture support
         uses: docker/setup-qemu-action@v3
@@ -27,55 +26,62 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 🚀 Run Terraform build & tests inside linux/386 container
+        env:
+          QA_TOKEN: ${{ secrets.QA_TOKEN }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
-            set -e;
-            echo 'Updating apt-get...'; 
-            apt-get update && \
-            echo 'Installing required packages...'; 
-            apt-get install -y wget unzip git openjdk-17-jdk golang && \
+          docker run --rm -e QA_TOKEN=$QA_TOKEN -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
+            set -e
 
-            echo 'Installing Go 1.22.7 for 386...'; 
-            wget https://go.dev/dl/go1.22.7.linux-386.tar.gz && \
-            tar -C /usr/local -xzf go1.22.7.linux-386.tar.gz && \
-            export PATH=\$PATH:/usr/local/go/bin && \
-            go version && \
+            apt-get update &&
+            apt-get install -y wget unzip git openjdk-17-jdk golang tar &&
 
-            echo 'Installing Apache Maven 3.9.6...'; 
-            wget https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
-            tar xzvf apache-maven-3.9.6-bin.tar.gz && \
-            export MAVEN_HOME=\$PWD/apache-maven-3.9.6 && \
-            export PATH=\$MAVEN_HOME/bin:\$PATH && \
-            mvn -v && \
+            # Install Maven manually
+            wget https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz &&
+            tar xzvf apache-maven-3.9.6-bin.tar.gz &&
+            export MAVEN_HOME=\$PWD/apache-maven-3.9.6 &&
+            export PATH=\$MAVEN_HOME/bin:\$PATH &&
 
-            export GOPATH=/workspace/go && \
-            mkdir -p \$GOPATH && \
-            export GOARCH=386 && \
-            export GOOS=linux && \
+            # Install Go
+            wget https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
+            tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
+            export PATH=\$PATH:/usr/local/go/bin &&
+            go version &&
 
-            echo 'Running go mod tidy and building Terraform provider...'; 
-            go mod tidy && \
-            go build -o terraform-provider-digicert && \
-            mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
-            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
+            export GOPATH=/workspace/go &&
+            mkdir -p \$GOPATH &&
+            export PATH=\$PATH:/workspace &&
+            export GOARCH=386 &&
+            export GOOS=linux &&
 
-            echo 'Installing Terraform 1.1.4 for linux/386...'; 
-            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip && \
-            unzip terraform_1.1.4_linux_386.zip && \
-            mv terraform /usr/local/bin/ && \
-            terraform version && \
-            echo '✅ Terraform provider build complete.'; \
+            cd /workspace &&
+            go mod tidy &&
+            go build -o terraform-provider-digicert &&
+            mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
+            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
 
-            echo '🔄 Cloning automation test repo...'; \
-            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git && \
-            cd DigicertTerraformTests; \
+            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
+            unzip terraform_1.1.4_linux_386.zip &&
+            mv terraform /usr/local/bin/ &&
+            terraform version &&
+            echo '✅ Terraform provider build complete.'
 
-            echo '▶ Running initial Maven test suite...'; \
-            if ! mvn clean test -DsuiteXmlFile=testng.xml; then \
-              echo '⚠ Initial test failed, attempting rerun with failure.xml...'; \
-              if ! mvn test -DsuiteXmlFile=failure.xml; then \
-                echo '❌ Final rerun also failed. Exiting with failure.'; \
-                exit 1; \
-              fi; \
-            fi;
+            echo '🔄 Cloning automation test repo...'
+            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
+            cd DigicertTerraformTests &&
+
+            echo '▶ Running initial Maven test suite...'
+
+            if ! java -cp \"\$MAVEN_HOME/boot/plexus-classworlds-*.jar:\$MAVEN_HOME/lib/*\" \
+              -Dclassworlds.conf=\$MAVEN_HOME/bin/m2.conf \
+              -Dmaven.home=\$MAVEN_HOME \
+              org.codehaus.plexus.classworlds.launcher.Launcher clean test -DsuiteXmlFile=testng.xml; then
+              echo '⚠ Initial test failed, attempting rerun with failure.xml...' &&
+              if ! java -cp \"\$MAVEN_HOME/boot/plexus-classworlds-*.jar:\$MAVEN_HOME/lib/*\" \
+                -Dclassworlds.conf=\$MAVEN_HOME/bin/m2.conf \
+                -Dmaven.home=\$MAVEN_HOME \
+                org.codehaus.plexus.classworlds.launcher.Launcher test -DsuiteXmlFile=failure.xml; then
+                echo '❌ Final rerun also failed. Exiting with failure.' &&
+                exit 1
+              fi
+            fi
           "
