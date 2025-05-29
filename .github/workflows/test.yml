@@ -26,10 +26,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 🚀 Run Terraform build & tests inside linux/386 container
-        env:
-          QA_TOKEN: ${{ secrets.QA_TOKEN }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -s <<'EOF'
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "$(cat <<'EOF'
             set -e
 
             echo '📦 Installing dependencies...'
@@ -69,7 +67,7 @@ jobs:
             mvn -version
 
             echo '🔄 Cloning automation test repo...'
-            git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
+            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git &&
             cd DigicertTerraformTests
 
             echo '▶ Running initial Maven test suite...'
@@ -83,3 +81,4 @@ jobs:
 
             echo '✅ Tests completed successfully.'
           EOF
+          )"
