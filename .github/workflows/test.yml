@@ -29,28 +29,44 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
             set -e
-            apt-get update &&
-            apt-get install -y wget unzip git openjdk-17-jdk maven golang &&
-            export GOPATH=/workspace/go &&
-            mkdir -p \$GOPATH &&
-            export PATH=\$PATH:/workspace &&
-            export GOARCH=386 &&
-            export GOOS=linux &&
-            cd /workspace &&
-            go version &&
-            go mod tidy &&
-            go build -o terraform-provider-digicert &&
-            mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
-            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 &&
-            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
-            unzip terraform_1.1.4_linux_386.zip &&
-            mv terraform /usr/local/bin/ &&
-            terraform version &&
+
+            apt-get update && \
+            apt-get install -y wget unzip git openjdk-17-jdk golang && \
+
+            # Install Go 1.22.7 manually to fix go.mod version mismatch
+            wget https://go.dev/dl/go1.22.7.linux-386.tar.gz && \
+            tar -C /usr/local -xzf go1.22.7.linux-386.tar.gz && \
+            export PATH=\$PATH:/usr/local/go/bin && \
+            go version && \
+
+            # Install Maven manually to avoid ClassNotFoundException
+            wget https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
+            tar xzvf apache-maven-3.9.6-bin.tar.gz && \
+            export MAVEN_HOME=\$PWD/apache-maven-3.9.6 && \
+            export PATH=\$MAVEN_HOME/bin:\$PATH && \
+            mvn -v && \
+
+            export GOPATH=/workspace/go && \
+            mkdir -p \$GOPATH && \
+            export PATH=\$PATH:/workspace && \
+            export GOARCH=386 && \
+            export GOOS=linux && \
+
+            cd /workspace && \
+            go mod tidy && \
+            go build -o terraform-provider-digicert && \
+            mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
+            cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
+
+            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip && \
+            unzip terraform_1.1.4_linux_386.zip && \
+            mv terraform /usr/local/bin/ && \
+            terraform version && \
             echo '✅ Terraform provider build complete.'
 
             echo '🔄 Cloning automation test repo...'
-            git clone https://github.com/digicert/DigicertTerraformTests.git &&
-            cd DigicertTerraformTests
+            git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git && \
+            cd DigicertTerraformTests && \
 
             echo '▶ Running initial Maven test suite...'
             mvn clean test -DsuiteXmlFile=testng.xml || (
@@ -61,3 +77,4 @@ jobs:
               )
             )
           "
+
