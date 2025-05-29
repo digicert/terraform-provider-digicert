@@ -25,81 +25,78 @@ jobs:
       - name: 🔄 Checkout Terraform Provider Repository
         uses: actions/checkout@v3
 
-      - name: 📦 Install dependencies in container (apt-get update + install)
+      - name: 📦 Update apt-get package list in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            apt-get update && \
-            apt-get install -y --no-install-recommends wget unzip git openjdk-17-jdk curl tar && \
-            rm -rf /var/lib/apt/lists/*"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "apt-get update"
 
-      - name: 📥 Download and install Go 1.22.3 in container
+      - name: 📦 Install essential packages in container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+            apt-get update && apt-get install -y wget unzip git openjdk-17-jdk curl tar"
+
+      - name: 📥 Download and extract Go 1.22.3 in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+            apt-get update && apt-get install -y curl tar && \
             curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz && \
             tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz && \
             rm go1.22.3.linux-386.tar.gz && \
             /usr/local/go/bin/go version"
 
-      - name: 🛠 Fix go.mod Go version line
+      - name: 🛠 Sed go.mod for Go version fix
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod"
 
       - name: 🛠 Run go mod tidy in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH i386/debian:bullseye bash -c "\
-            /usr/local/go/bin/go mod tidy"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH i386/debian:bullseye bash -c "go mod tidy"
 
       - name: 🛠 Build Terraform provider binary in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH -e GOPATH=/workspace/go -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
-            mkdir -p $GOPATH && \
-            export PATH=$PATH:$GOPATH/bin && \
-            /usr/local/go/bin/go build -o terraform-provider-digicert"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            -e PATH=/usr/local/go/bin:$PATH \
+            -e GOPATH=/workspace/go \
+            -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
+              mkdir -p $GOPATH && \
+              export PATH=$PATH:$GOPATH/bin && \
+              go build -o terraform-provider-digicert"
 
       - name: 🛠 Copy Terraform provider to proper path in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e GOPATH=/workspace/go -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
-            mkdir -p $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
-            cp terraform-provider-digicert $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386/"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            -e GOPATH=/workspace/go -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
+              mkdir -p $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
+              cp terraform-provider-digicert $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
 
       - name: ⬇ Download Terraform 1.1.4 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            wget -q https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip"
 
       - name: ⬇ Unzip Terraform in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            unzip -q terraform_1.1.4_linux_386.zip"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "unzip terraform_1.1.4_linux_386.zip"
 
-      - name: ⬇ Move Terraform binary to /usr/local/bin in container (requires sudo)
+      - name: ⬇ Move Terraform binary to /usr/local/bin in container
         run: |
-          docker run --rm --privileged -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            apt-get update && apt-get install -y sudo && \
-            sudo mv terraform /usr/local/bin/ && \
-            sudo chmod +x /usr/local/bin/terraform"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "mv terraform /usr/local/bin/"
 
       - name: ⬇ Verify Terraform installation in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            terraform version"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "terraform version"
 
       - name: ⬇ Download Maven 3.9.6 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            curl -sLO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz"
 
       - name: ⬇ Extract Maven 3.9.6 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            tar -xzf apache-maven-3.9.6-bin.tar.gz"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "tar -xzf apache-maven-3.9.6-bin.tar.gz"
 
       - name: ⬇ Verify Maven installation in container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            -e MAVEN_HOME=/workspace/apache-maven-3.9.6 \
-            -e PATH=/workspace/apache-maven-3.9.6/bin:$PATH \
+            -e MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 \
+            -e PATH=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6/bin:$PATH \
             i386/debian:bullseye bash -c "mvn -version"
 
       - name: 🔄 Clone automation test repo
@@ -109,15 +106,16 @@ jobs:
       - name: ▶ Run initial Maven test suite inside container
         run: |
           docker run --rm -v ${{ github.workspace }}/DigicertTerraformTests:/workspace -w /workspace \
-            -e MAVEN_HOME=/workspace/apache-maven-3.9.6 \
-            -e PATH=/workspace/apache-maven-3.9.6/bin:$PATH \
+            -e MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 \
+            -e PATH=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6/bin:$PATH \
             i386/debian:bullseye bash -c "\
-            set -e; \
-            if ! mvn clean test -DsuiteXmlFile=testng.xml; then \
-              echo '⚠ Initial test failed, attempting rerun with failure.xml...'; \
-              if ! mvn test -DsuiteXmlFile=failure.xml; then \
-                echo '❌ Final rerun also failed. Exiting with failure.'; \
-                exit 1; \
+              set -e; \
+              if ! mvn clean test -DsuiteXmlFile=testng.xml; then \
+                echo '⚠ Initial test failed, attempting rerun with failure.xml...'; \
+                if ! mvn test -DsuiteXmlFile=failure.xml; then \
+                  echo '❌ Final rerun also failed. Exiting with failure.'; \
+                  exit 1; \
+                fi; \
               fi; \
-            fi; \
-            echo '✅ Tests completed successfully.'"
+              echo '✅ Tests completed successfully.' \
+            "
