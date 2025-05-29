@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  linux-386-test:
+  linux-test:
     runs-on: ubuntu-latest
     name: Run Terraform and Tests on linux/386 via Docker
 
