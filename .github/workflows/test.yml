@@ -59,13 +59,16 @@ jobs:
 
       - name: 🛠 Build Terraform provider binary in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            -e PATH=/usr/local/go/bin:$PATH \
-            -e GOPATH=/workspace/go \
-            -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
-              mkdir -p $GOPATH && \
-              export PATH=$PATH:$GOPATH/bin && \
-              go build -o terraform-provider-digicert"
+                docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+                  -e PATH=/usr/local/go/bin:$PATH \
+                  -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
+                    apt-get update && apt-get install -y curl tar && \
+                    curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz && \
+                    tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz && \
+                    export GOPATH=/workspace/go && \
+                    mkdir -p \$GOPATH && \
+                    /usr/local/go/bin/go build -o terraform-provider-digicert"
+            
 
       - name: 🛠 Copy Terraform provider to proper path in container
         run: |
