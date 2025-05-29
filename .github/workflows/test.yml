@@ -31,10 +31,10 @@ jobs:
             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
             maven:3.6.3-jdk-8 bash -c "$(cat <<'EOF'
               set -e
-      
+
               echo '📥 Installing additional deps...'
               apt-get update && apt-get install -y wget unzip git curl tar
-      
+
               echo '📥 Installing Go 1.22.3...'
               curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
               tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
@@ -45,7 +45,7 @@ jobs:
               export GOARCH=386 &&
               export GOOS=linux &&
               go version
-      
+
               echo '🛠 Building Terraform provider...'
               cd /workspace &&
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
@@ -53,23 +53,22 @@ jobs:
               go build -o terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
-      
+
               echo '⬇ Installing Terraform 1.1.4...'
               wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
               unzip terraform_1.1.4_linux_386.zip &&
               mv terraform /usr/local/bin/ &&
               terraform version
-      
+
               echo '🔄 Cloning automation test repo...'
               git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
               cd DigicertTerraformTests
-      
+
               echo '▶ Running tests...'
               mvn clean test -DsuiteXmlFile=testng.xml || \
               mvn test -DsuiteXmlFile=failure.xml || \
               (echo '❌ All attempts failed.' && exit 1)
-      
+
               echo '✅ Tests completed successfully.'
-            EOF
+          EOF
             )"
-      
