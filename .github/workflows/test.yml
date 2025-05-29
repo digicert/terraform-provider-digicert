@@ -47,9 +47,15 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod"
 
-      - name: 🛠 Run go mod tidy in container
+      - name: 🛠 Run go mod tidy in container (with Go installed)
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH i386/debian:bullseye bash -c "go mod tidy"
+            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
+              apt-get update && apt-get install -y curl tar && \
+              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz && \
+              tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz && \
+              rm go1.22.3.linux-386.tar.gz && \
+              /usr/local/go/bin/go mod tidy"
+        
 
       - name: 🛠 Build Terraform provider binary in container
         run: |
