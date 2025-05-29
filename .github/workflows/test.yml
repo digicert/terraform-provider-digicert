@@ -33,51 +33,54 @@ jobs:
             -e PATH=/workspace/apache-maven-3.9.6/bin:/usr/local/go/bin:$PATH \
             i386/debian:bullseye bash -c "
               set -e
-
-              echo '📦 Installing packages...'
+      
+              # Update & install all necessary packages
               apt-get update && apt-get install -y \
-                wget unzip curl git openjdk-17-jdk tar
-
-              echo '⬇️ Installing Go...'
+                wget unzip curl git openjdk-17-jdk tar grep sed
+      
+              # Install Go
               curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz
               tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz
               rm go1.22.3.linux-386.tar.gz
-
-              echo '🔧 Adjusting go.mod...'
+      
+              # Fix invalid import paths with '@version' if any
+              echo '🔍 Fixing invalid Go import paths...'
+              find . -name '*.go' -exec sed -i -E 's@\"([^\"]+)@v[0-9]+\.[0-9]+(\.[0-9]+)?([^\"]*)\"@\"\1\4\"@g' {} +
+      
+              # Fix go.mod and tidy
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod
-
-              echo '🧹 Running go mod tidy...'
               /usr/local/go/bin/go mod tidy
-
-              echo '🛠 Building Terraform provider...'
+      
+              # Build provider
               mkdir -p /workspace/go
               /usr/local/go/bin/go build -o terraform-provider-digicert
-
-              echo '⬇️ Installing Terraform...'
+      
+              # Install Terraform
               wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip
               unzip terraform_1.1.4_linux_386.zip
               mv terraform /usr/local/bin/
               terraform version
-
-              echo '⬇️ Installing Maven...'
+      
+              # Download Maven
               curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
               tar -xzf apache-maven-3.9.6-bin.tar.gz
-
-              echo '✅ Maven installed:'
+      
+              # Verify Maven
               apache-maven-3.9.6/bin/mvn -version
-
-              echo '🔄 Cloning test repository...'
+      
+              # Clone test repo
               git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git
-
-              echo '▶ Running Maven tests...'
+      
+              # Run Maven tests
               cd DigicertTerraformTests
-              if ! ../apache-maven-3.9.6/bin/mvn clean test -DsuiteXmlFile=testng.xml; then
+              if ! apache-maven-3.9.6/bin/mvn clean test -DsuiteXmlFile=testng.xml; then
                 echo '⚠️ Test failed. Retrying with failure.xml...'
-                if ! ../apache-maven-3.9.6/bin/mvn test -DsuiteXmlFile=failure.xml; then
+                if ! apache-maven-3.9.6/bin/mvn test -DsuiteXmlFile=failure.xml; then
                   echo '❌ Tests failed again.'
                   exit 1
                 fi
               fi
-
+      
               echo '✅ All tests passed.'
             "
+      
