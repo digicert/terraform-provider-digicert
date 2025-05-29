@@ -12,8 +12,7 @@ permissions:
 jobs:
   linux-test:
     runs-on: ubuntu-latest
-    name: Run Terraform and Tests on linux/386 via Docker
-
+    
     steps:
       - name: 🐳 Set up QEMU for cross-architecture support
         uses: docker/setup-qemu-action@v3
