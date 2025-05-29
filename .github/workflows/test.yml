@@ -28,7 +28,7 @@ jobs:
 
       - name: 🚀 Run Terraform build & tests inside linux/386 container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -s <<'EOF'
             set -e
 
             echo '📦 Installing dependencies...'
@@ -36,15 +36,15 @@ jobs:
             apt-get install -y wget unzip git openjdk-17-jdk curl tar
 
             export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-i386
-            export PATH=\$JAVA_HOME/bin:\$PATH
+            export PATH=$JAVA_HOME/bin:$PATH
 
             echo '📥 Installing Go 1.22.3...'
             curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz
             tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz
-            export PATH=/usr/local/go/bin:\$PATH
+            export PATH=/usr/local/go/bin:$PATH
             export GOPATH=/workspace/go
-            mkdir -p \"\$GOPATH\"
-            export PATH=\"\$PATH:\$GOPATH/bin\"
+            mkdir -p "$GOPATH"
+            export PATH="$PATH:$GOPATH/bin"
             export GOARCH=386
             export GOOS=linux
             go version
@@ -54,8 +54,8 @@ jobs:
             sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod || true
             go mod tidy
             go build -o terraform-provider-digicert
-            mkdir -p \"\$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386\"
-            cp terraform-provider-digicert \"\$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386\"
+            mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
+            cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
 
             echo '⬇ Installing Terraform 1.1.4...'
             wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip
@@ -68,7 +68,7 @@ jobs:
             tar -xzf apache-maven-3.9.6-bin.tar.gz
             mv apache-maven-3.9.6 /opt/maven
             export MAVEN_HOME=/opt/maven
-            export PATH=\$MAVEN_HOME/bin:\$PATH
+            export PATH=$MAVEN_HOME/bin:$PATH
             echo '✅ Maven directory listing:'
             ls -l /opt/maven/bin
             mvn -version
@@ -87,4 +87,4 @@ jobs:
             fi
 
             echo '✅ Tests completed successfully.'
-          "
+          EOF
