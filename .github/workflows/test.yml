@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      QA_TOKEN: ${{ secrets.QA_TOKEN }}  # Your secret token here
+
     steps:
       - name: Checkout Terraform Provider
         uses: actions/checkout@v4
@@ -58,7 +61,7 @@ jobs:
             mvn -version
 
             echo "🔄 Cloning automation test repo..."
-            git clone https://github.com/digicert/DigicertTerraformTests.git
+            git clone https://$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git
             cd DigicertTerraformTests
 
             echo "▶ Running initial Maven test suite..."
