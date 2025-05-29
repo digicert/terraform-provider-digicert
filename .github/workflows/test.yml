@@ -25,54 +25,77 @@ jobs:
       - name: 🔄 Checkout Terraform Provider Repository
         uses: actions/checkout@v3
 
-      - name: 📦 Install dependencies in container
+      - name: 📦 Update apt-get package list in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "apt-get update"
+
+      - name: 📦 Install wget, unzip, git, openjdk-17-jdk, curl, tar in container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            apt-get update && \
             apt-get install -y wget unzip git openjdk-17-jdk curl tar || \
             (apt-get update --fix-missing && apt-get install -y wget unzip git openjdk-17-jdk curl tar)\
           "
 
-      - name: 📥 Install Go 1.22.3 in container
+      - name: 📥 Download Go 1.22.3 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz && \
-            tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz && \
-            echo 'Go version:' && /usr/local/go/bin/go version \
-          "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz"
 
-      - name: 🛠 Build Terraform provider in container
+      - name: 📥 Extract Go 1.22.3 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            export PATH=/usr/local/go/bin:$PATH && \
-            export GOPATH=/workspace/go && mkdir -p $GOPATH && \
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz"
+
+      - name: 📥 Verify Go installation in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH i386/debian:bullseye bash -c "go version"
+
+      - name: 🛠 Sed go.mod for Go version fix
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod"
+
+      - name: 🛠 Run go mod tidy in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH i386/debian:bullseye bash -c "go mod tidy"
+
+      - name: 🛠 Build Terraform provider binary in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e PATH=/usr/local/go/bin:$PATH -e GOPATH=/workspace/go -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
+            mkdir -p $GOPATH && \
             export PATH=$PATH:$GOPATH/bin && \
-            export GOARCH=386 && export GOOS=linux && \
-            sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod && \
-            go mod tidy && \
-            go build -o terraform-provider-digicert && \
+            go build -o terraform-provider-digicert"
+
+      - name: 🛠 Copy Terraform provider to proper path in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e GOPATH=/workspace/go -e GOARCH=386 -e GOOS=linux i386/debian:bullseye bash -c "\
             mkdir -p $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 && \
-            cp terraform-provider-digicert $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386 \
-          "
+            cp terraform-provider-digicert $GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
 
-      - name: ⬇ Install Terraform 1.1.4 in container
+      - name: ⬇ Download Terraform 1.1.4 in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip && \
-            unzip terraform_1.1.4_linux_386.zip && \
-            mv terraform /usr/local/bin/ && \
-            terraform version \
-          "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip"
 
-      - name: ⬇ Install Maven 3.9.6 in container
+      - name: ⬇ Unzip Terraform in container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "\
-            curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
-            tar -xzf apache-maven-3.9.6-bin.tar.gz && \
-            export MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 && \
-            export PATH=$MAVEN_HOME/bin:$PATH && \
-            mvn -version \
-          "
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "unzip terraform_1.1.4_linux_386.zip"
+
+      - name: ⬇ Move Terraform binary to /usr/local/bin in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "mv terraform /usr/local/bin/"
+
+      - name: ⬇ Verify Terraform installation in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "terraform version"
+
+      - name: ⬇ Download Maven 3.9.6 in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "curl -LO https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz"
+
+      - name: ⬇ Extract Maven 3.9.6 in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace i386/debian:bullseye bash -c "tar -xzf apache-maven-3.9.6-bin.tar.gz"
+
+      - name: ⬇ Verify Maven installation in container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace -e MAVEN_HOME=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6 -e PATH=/workspace/apache-maven-3.9.6-bin/apache-maven-3.9.6/bin:$PATH i386/debian:bullseye bash -c "mvn -version"
 
       - name: 🔄 Clone automation test repo
         run: |
