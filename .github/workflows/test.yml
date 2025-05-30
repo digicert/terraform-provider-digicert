@@ -82,9 +82,12 @@ jobs:
               echo '▶ Running tests...'
               pwd
               ls -l
-              mvn clean test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=testng.xml || \
-              mvn test test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=failure.xml || \
-              (echo '❌ All attempts failed.' && exit 1)
+              mvn clean test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" \
+               -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=testng.xml > maven.log 2>&1 || \
+              mvn test test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" \
+               -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=failure.xml > maven.log 2>&1 || \
+              (echo '❌ All attempts failed.' && cat maven.log && exit 1)
+
 
               echo '✅ Tests completed successfully.'
           EOF
