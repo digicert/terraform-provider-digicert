@@ -50,9 +50,11 @@ jobs:
               cd /workspace &&
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
               go mod tidy &&
+              export GOARCH=386 &&
               go build -o terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
+              cp terraform-provider-digicert /workspace/DigicertTerraformTests/
 
               echo '⬇ Installing Terraform 1.1.4...'
               wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
@@ -66,8 +68,8 @@ jobs:
               git checkout javaVersionFix
 
               echo '▶ Running tests...'
-              mvn clean test -DsuiteXmlFile=testng.xml || \
-              mvn test -DsuiteXmlFile=failure.xml || \
+              mvn clean test -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
+              mvn test -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED" -DsuiteXmlFile=failure.xml || \
               (echo '❌ All attempts failed.' && exit 1)
 
               echo '✅ Tests completed successfully.'
