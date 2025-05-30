@@ -51,6 +51,7 @@ jobs:
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
               go mod tidy &&
               export GOARCH=386 &&
+              apt-get install -y file &&
               go build -buildvcs=false -o terraform-provider-digicert &&
               file terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
@@ -67,6 +68,7 @@ jobs:
               git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
               cd DigicertTerraformTests &&
               git checkout javaVersionFix
+              cp /workspace/terraform-provider-digicert /workspace/DigicertTerraformTests/
 
               echo '▶ Running tests...'
               mvn clean test -DargLine="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
