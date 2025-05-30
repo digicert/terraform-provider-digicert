@@ -29,8 +29,11 @@ jobs:
         run: |
           docker run --rm --platform linux/386 -v ${{ github.workspace }}:/workspace -w /workspace \
             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
-            maven:3.6.3-jdk-8 bash -c "$(cat <<'EOF'
+            openjdk:8-jdk-alpine bash -c "$(cat <<'EOF'
               set -e
+
+              echo 'Installing Maven...'
+              apk add --no-cache maven bash curl git wget unzip tar file
 
               echo '📥 Installing additional deps...'
               apt-get update && apt-get install -y wget unzip git curl tar
