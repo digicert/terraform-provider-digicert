@@ -24,7 +24,7 @@ jobs:
       - name: Build custom 32-bit Maven+JDK8 Docker image
         run: |
           cat > Dockerfile <<EOF
-          FROM i386/debian:buster-slim
+          FROM i386/debian:stretch-slim
 
           RUN apt-get update && apt-get install -y wget curl git openjdk-8-jdk maven bash \
               && rm -rf /var/lib/apt/lists/*
