@@ -56,7 +56,7 @@ jobs:
               file terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
-              cp terraform-provider-digicert /workspace/DigicertTerraformTests/
+            
 
               echo '⬇ Installing Terraform 1.1.4...'
               wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
