@@ -12,8 +12,10 @@ permissions:
 jobs:
   ubuntu-test:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
+      - name: 🔄 Checkout Repository
+        uses: actions/checkout@v3
+
       - name: 🐳 Set up QEMU for cross-architecture support
         uses: docker/setup-qemu-action@v3
         with:
@@ -22,58 +24,65 @@ jobs:
       - name: 🧱 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🔄 Checkout Terraform Provider Repository
-        uses: actions/checkout@v3
+      - name: 📄 Write Dockerfile
+        run: |
+          cat <<EOF > Dockerfile
+          FROM i386/debian:bullseye-slim
 
-      - name: 🚀 Run Terraform build & tests inside prebuilt Maven+JDK container
+          RUN apt-get update && \
+              apt-get install -y openjdk-8-jdk maven curl wget unzip git tar file && \
+              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz && \
+              tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz && \
+              rm go1.22.3.linux-386.tar.gz
+
+          ENV PATH="/usr/local/go/bin:\$PATH"
+          ENV GOPATH="/workspace/go"
+          ENV GOARCH=386
+          ENV GOOS=linux
+          EOF
+
+      - name: 🛠️ Build Docker Image Locally
+        run: |
+          docker buildx build --platform linux/386 -t local/maven-jdk8-go386 --load .
+
+      - name: 🚀 Run Build and Test in Custom linux/386 Container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
-            maven:3.6.3-jdk-8 bash -c "$(cat <<'EOF'
+            local/maven-jdk8-go386 bash -c "$(cat <<'EOF'
               set -e
 
-              echo '📥 Installing additional deps...'
-              apt-get update && apt-get install -y wget unzip git curl tar
-
-              echo '📥 Installing Go 1.22.3...'
-              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
-              tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
-              export PATH=/usr/local/go/bin:$PATH &&
-              export GOPATH=/workspace/go &&
-              mkdir -p "$GOPATH" &&
-              export PATH="$PATH:$GOPATH/bin" &&
-              export GOARCH=386 &&
-              export GOOS=linux &&
+              echo '📦 Verifying tools'
+              java -version
+              mvn -v
               go version
 
               echo '🛠 Building Terraform provider...'
-              cd /workspace &&
-              sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
-              go mod tidy &&
-              apt-get install -y file &&
-              GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
-              file terraform-provider-digicert &&
-              mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
-              cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
-            
+              cd /workspace
+              sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod || true
+              go mod tidy
+              mkdir -p /workspace/go/bin/digicert.com/terraform/digicert/0.1.0/linux_386
+              GOARCH=386 GOOS=linux go build -buildvcs=false -o terraform-provider-digicert
+              cp terraform-provider-digicert /workspace/go/bin/digicert.com/terraform/digicert/0.1.0/linux_386/
+              file terraform-provider-digicert
 
               echo '⬇ Installing Terraform 1.1.4...'
-              wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
-              unzip terraform_1.1.4_linux_386.zip &&
-              mv terraform /usr/local/bin/ &&
+              wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip
+              unzip terraform_1.1.4_linux_386.zip
+              mv terraform /usr/local/bin/
               terraform version
 
               echo '🔄 Cloning automation test repo...'
-              git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
-              cd DigicertTerraformTests &&
+              git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git
+              cd DigicertTerraformTests
               git checkout javaVersionFix
-              cp /workspace/terraform-provider-digicert /workspace/DigicertTerraformTests/
+              cp /workspace/terraform-provider-digicert .
 
               echo '▶ Running tests...'
               mvn clean test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=testng.xml || \
-              mvn test test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
+              mvn test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
               (echo '❌ All attempts failed.' && exit 1)
 
               echo '✅ Tests completed successfully.'
           EOF
-            )"
+          )"
