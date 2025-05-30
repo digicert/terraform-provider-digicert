@@ -27,7 +27,7 @@ jobs:
 
       - name: 🚀 Run Terraform build & tests inside prebuilt Maven+JDK container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+          docker run --rm --platform linux/386 -v ${{ github.workspace }}:/workspace -w /workspace \
             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
             maven:3.6.3-jdk-8 bash -c "$(cat <<'EOF'
               set -e
