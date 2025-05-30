@@ -1,0 +1,88 @@
+name: Build & Test with Custom 32-bit Maven+JDK8 Image
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU for cross-platform build
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/386
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build custom 32-bit Maven+JDK8 Docker image
+        run: |
+          cat > Dockerfile <<EOF
+          FROM i386/debian:bullseye-slim
+
+          RUN apt-get update && apt-get install -y wget curl git openjdk-8-jdk maven bash \
+              && rm -rf /var/lib/apt/lists/*
+
+          ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-i386
+          ENV PATH=\$JAVA_HOME/bin:\$PATH
+
+          CMD ["bash"]
+          EOF
+
+          docker build --platform linux/386 -t custom-maven-jdk8-i386:latest .
+
+      - name: Run build and tests in custom 32-bit Maven+JDK8 image
+        run: |
+          docker run --rm --platform linux/386 \
+            -v ${{ github.workspace }}:/workspace -w /workspace \
+            custom-maven-jdk8-i386:latest \
+            bash -c "
+              set -e
+
+              echo 'Installing additional dependencies...'
+              apt-get update && apt-get install -y wget unzip curl tar
+
+              echo 'Installing Go 1.22.3...'
+              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz
+              tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz
+              export PATH=/usr/local/go/bin:\$PATH
+              export GOPATH=/workspace/go
+              mkdir -p \$GOPATH
+              export PATH=\$PATH:\$GOPATH/bin
+              export GOARCH=386
+              export GOOS=linux
+              go version
+
+              echo 'Building Terraform provider...'
+              cd /workspace
+              sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod
+              go mod tidy
+              GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert
+              mkdir -p \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386
+              cp terraform-provider-digicert \$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386
+
+              echo 'Installing Terraform 1.1.4...'
+              wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip
+              unzip terraform_1.1.4_linux_386.zip
+              mv terraform /usr/local/bin/
+              terraform version
+
+              echo 'Cloning automation test repo...'
+              git clone https://x-access-token:${{ secrets.QA_TOKEN }}@github.com/digicert/DigicertTerraformTests.git
+              cd DigicertTerraformTests
+              git checkout javaVersionFix
+              cp /workspace/terraform-provider-digicert /workspace/DigicertTerraformTests/
+
+              echo 'Running tests...'
+              mvn clean test -DargLine=\"-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none\" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=testng.xml || \
+              mvn test test -DargLine=\"-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none\" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=failure.xml || \
+              (echo 'All attempts failed.' && exit 1)
+
+              echo 'Tests completed successfully.'
+            "

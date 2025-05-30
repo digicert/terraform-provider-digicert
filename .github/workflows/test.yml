@@ -1,94 +1,94 @@
-name: Terraform Provider Testing Pipeline
+# name: Terraform Provider Testing Pipeline
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+# on:
+#   push:
+#     branches: [ "master" ]
+#   pull_request:
+#     branches: [ "master" ]
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-jobs:
-  ubuntu-test:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - name: 🐳 Set up QEMU for cross-architecture support
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: linux/386
+# jobs:
+#   ubuntu-test:
+#     runs-on: ubuntu-latest
+#     continue-on-error: true
+#     steps:
+#       - name: 🐳 Set up QEMU for cross-architecture support
+#         uses: docker/setup-qemu-action@v3
+#         with:
+#           platforms: linux/386
 
-      - name: 🧱 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+#       - name: 🧱 Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
 
-      - name: 🔄 Checkout Terraform Provider Repository
-        uses: actions/checkout@v3
+#       - name: 🔄 Checkout Terraform Provider Repository
+#         uses: actions/checkout@v3
 
-      - name: 🚀 Run Terraform build & tests inside prebuilt Maven+JDK container
-        run: |
-          docker run --rm --platform linux/386 -v ${{ github.workspace }}:/workspace -w /workspace \
-            -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
-            openjdk:8-jdk-alpine sh -c "$(cat <<'EOF'
-              set -e
+#       - name: 🚀 Run Terraform build & tests inside prebuilt Maven+JDK container
+#         run: |
+#           docker run --rm --platform linux/386 -v ${{ github.workspace }}:/workspace -w /workspace \
+#             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
+#             openjdk:8-jdk-alpine sh -c "$(cat <<'EOF'
+#               set -e
 
-              echo 'Installing Maven...'
-              apk add --no-cache maven bash curl git wget unzip tar file
+#               echo 'Installing Maven...'
+#               apk add --no-cache maven bash curl git wget unzip tar file
 
-              echo '📥 Installing additional deps...'
-              apk update && apk add --no-cache wget unzip git curl tar file bash
+#               echo '📥 Installing additional deps...'
+#               apk update && apk add --no-cache wget unzip git curl tar file bash
 
-              echo '📥 Installing Go 1.22.3...'
-              curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
-              tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
-              export PATH=/usr/local/go/bin:$PATH &&
-              export GOPATH=/workspace/go &&
-              mkdir -p "$GOPATH" &&
-              export PATH="$PATH:$GOPATH/bin" &&
-              export GOARCH=386 &&
-              export GOOS=linux &&
-              go version
+#               echo '📥 Installing Go 1.22.3...'
+#               curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
+#               tar -C /usr/local -xzf go1.22.3.linux-386.tar.gz &&
+#               export PATH=/usr/local/go/bin:$PATH &&
+#               export GOPATH=/workspace/go &&
+#               mkdir -p "$GOPATH" &&
+#               export PATH="$PATH:$GOPATH/bin" &&
+#               export GOARCH=386 &&
+#               export GOOS=linux &&
+#               go version
 
-              echo '🛠 Building Terraform provider...'
-              cd /workspace &&
-              sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
-              go mod tidy &&
-              if command -v apt-get >/dev/null; then
-                apt-get update && apt-get install -y file
-              elif command -v apk >/dev/null; then
-                apk update && apk add --no-cache file
-              else
-                echo "No supported package manager found"
-                exit 1
-              fi
-              GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
-              file terraform-provider-digicert &&
-              mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
-              cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
+#               echo '🛠 Building Terraform provider...'
+#               cd /workspace &&
+#               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
+#               go mod tidy &&
+#               if command -v apt-get >/dev/null; then
+#                 apt-get update && apt-get install -y file
+#               elif command -v apk >/dev/null; then
+#                 apk update && apk add --no-cache file
+#               else
+#                 echo "No supported package manager found"
+#                 exit 1
+#               fi
+#               GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
+#               file terraform-provider-digicert &&
+#               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
+#               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
             
 
-              echo '⬇ Installing Terraform 1.1.4...'
-              wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
-              unzip terraform_1.1.4_linux_386.zip &&
-              mv terraform /usr/local/bin/ &&
-              terraform version
+#               echo '⬇ Installing Terraform 1.1.4...'
+#               wget https://releases.hashicorp.com/terraform/1.1.4/terraform_1.1.4_linux_386.zip &&
+#               unzip terraform_1.1.4_linux_386.zip &&
+#               mv terraform /usr/local/bin/ &&
+#               terraform version
 
-              echo '🔄 Cloning automation test repo...'
-              git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
-              cd DigicertTerraformTests &&
-              git checkout javaVersionFix
-              cp /workspace/terraform-provider-digicert /workspace/DigicertTerraformTests/
+#               echo '🔄 Cloning automation test repo...'
+#               git clone https://x-access-token:$QA_TOKEN@github.com/digicert/DigicertTerraformTests.git &&
+#               cd DigicertTerraformTests &&
+#               git checkout javaVersionFix
+#               cp /workspace/terraform-provider-digicert /workspace/DigicertTerraformTests/
 
-              echo '▶ Running tests...'
-              pwd
-              ls -l
-              mvn clean test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" \
-               -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=testng.xml > maven.log 2>&1 || \
-              mvn test test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" \
-               -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=failure.xml > maven.log 2>&1 || \
-              (echo '❌ All attempts failed.' && cat maven.log && exit 1)
+#               echo '▶ Running tests...'
+#               pwd
+#               ls -l
+#               mvn clean test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" \
+#                -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=testng.xml > maven.log 2>&1 || \
+#               mvn test test -X -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" \
+#                -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -Dsurefire.printSummary=true -DsuiteXmlFile=failure.xml > maven.log 2>&1 || \
+#               (echo '❌ All attempts failed.' && cat maven.log && exit 1)
 
 
-              echo '✅ Tests completed successfully.'
-          EOF
-            )"
+#               echo '✅ Tests completed successfully.'
+#           EOF
+#             )"
