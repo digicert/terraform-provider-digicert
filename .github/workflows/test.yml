@@ -50,7 +50,15 @@ jobs:
               cd /workspace &&
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
               go mod tidy &&
-              apt-get install -y file &&
+              echo '📦 Installing file utility...'
+              if command -v apt-get >/dev/null; then
+               apt-get update && apt-get install -y file || echo '❌ Failed to install file with apt'
+              elif command -v apk >/dev/null; then
+               apk add --no-cache file || echo '❌ Failed to install file with apk'
+              else
+               echo '❌ No supported package manager found for installing file'
+              fi
+
               GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
               echo '🛠check file'
               file terraform-provider-digicert &&
