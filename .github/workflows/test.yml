@@ -50,9 +50,8 @@ jobs:
               cd /workspace &&
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
               go mod tidy &&
-              export GOARCH=386 &&
               apt-get install -y file &&
-              go build -buildvcs=false -o terraform-provider-digicert &&
+              GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert && &&
               file terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
