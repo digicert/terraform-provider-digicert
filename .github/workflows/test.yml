@@ -71,8 +71,8 @@ jobs:
               cp /workspace/terraform-provider-digicert /workspace/DigicertTerraformTests/
 
               echo '▶ Running tests...'
-              mvn clean test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.exclude=org.codehaus.groovy" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
-              mvn test test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.exclude=org.codehaus.groovy" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
+              mvn clean test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=testng.xml || \
+              mvn test test -DargLine="-Xmx1024m -Daj.weaving.disable=true -Daj.weaving.loaders=none" -Dsurefire.forkCount=1 -Dsurefire.reuseForks=false -DsuiteXmlFile=failure.xml || \
               (echo '❌ All attempts failed.' && exit 1)
 
               echo '✅ Tests completed successfully.'
