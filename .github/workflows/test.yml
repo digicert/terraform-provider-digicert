@@ -36,7 +36,7 @@ jobs:
               apk add --no-cache maven bash curl git wget unzip tar file
 
               echo '📥 Installing additional deps...'
-              apt-get update && apt-get install -y wget unzip git curl tar
+              apk update && apk add --no-cache wget unzip git curl tar file bash
 
               echo '📥 Installing Go 1.22.3...'
               curl -LO https://go.dev/dl/go1.22.3.linux-386.tar.gz &&
@@ -53,7 +53,14 @@ jobs:
               cd /workspace &&
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
               go mod tidy &&
-              apt-get install -y file &&
+              if command -v apt-get >/dev/null; then
+                apt-get update && apt-get install -y file
+              elif command -v apk >/dev/null; then
+                apk update && apk add --no-cache file
+              else
+                echo "No supported package manager found"
+                exit 1
+              fi
               GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
               file terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
