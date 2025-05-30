@@ -26,9 +26,10 @@ jobs:
           cat > Dockerfile <<EOF
           FROM i386/debian:stretch-slim
 
-          # Replace stretch repo URLs with archive URLs for EOL release
+          # Replace deb.debian.org with archive.debian.org, remove security & stretch-updates repos, and disable repo expiry check
           RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
               sed -i '/security.debian.org/d' /etc/apt/sources.list && \
+              sed -i '/stretch-updates/d' /etc/apt/sources.list && \
               echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
 
           RUN apt-get update && apt-get install -y wget curl git openjdk-8-jdk maven bash \
@@ -38,6 +39,7 @@ jobs:
           ENV PATH=$JAVA_HOME/bin:$PATH
 
           CMD ["bash"]
+
 
           EOF
 
