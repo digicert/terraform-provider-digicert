@@ -52,6 +52,7 @@ jobs:
               go mod tidy &&
               apt-get install -y file &&
               GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
+              echo '🛠check file'
               file terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
