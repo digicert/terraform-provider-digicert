@@ -29,7 +29,7 @@ jobs:
         run: |
           docker run --rm --platform linux/386 -v ${{ github.workspace }}:/workspace -w /workspace \
             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
-            openjdk:8-jdk-alpine bash -c "$(cat <<'EOF'
+            openjdk:8-jdk-alpine sh -c "$(cat <<'EOF'
               set -e
 
               echo 'Installing Maven...'
