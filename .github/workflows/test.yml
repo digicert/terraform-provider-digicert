@@ -27,9 +27,9 @@ jobs:
 
       - name: 🚀 Run Terraform build & tests inside prebuilt Maven+JDK container
         run: |
-          docker run --rm --platform linux/386 -v ${{ github.workspace }}:/workspace -w /workspace \
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             -e QA_TOKEN=${{ secrets.QA_TOKEN }} \
-            maven:3.5.0-jdk-7 bash -c "$(cat <<'EOF'
+            maven:3.6.3-jdk-8 bash -c "$(cat <<'EOF'
               set -e
 
               echo '📥 Installing additional deps...'
@@ -50,17 +50,8 @@ jobs:
               cd /workspace &&
               sed -i 's/^go 1\\.22\\.7/go 1.22/' go.mod &&
               go mod tidy &&
-              echo '📦 Installing file utility...'
-              if command -v apt-get >/dev/null; then
-               apt-get update && apt-get install -y file || echo '❌ Failed to install file with apt'
-              elif command -v apk >/dev/null; then
-               apk add --no-cache file || echo '❌ Failed to install file with apk'
-              else
-               echo '❌ No supported package manager found for installing file'
-              fi
-
+              apt-get install -y file &&
               GOOS=linux GOARCH=386 go build -buildvcs=false -o terraform-provider-digicert &&
-              echo '🛠check file'
               file terraform-provider-digicert &&
               mkdir -p "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386" &&
               cp terraform-provider-digicert "$GOPATH/bin/digicert.com/terraform/digicert/0.1.0/linux_386"
