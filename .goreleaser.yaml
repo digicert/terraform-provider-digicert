@@ -13,15 +13,12 @@ builds:
     - darwin
   goarch:
     - amd64
-    - '386'
     - arm64
   ignore:
     - goos: windows
       goarch: 'arm64'
     - goos: linux
       goarch: 'arm64'
-    - goos: darwin
-      goarch: '386'
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
   - format: zip

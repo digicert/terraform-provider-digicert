@@ -204,6 +204,7 @@ func buildIssuanceRequest(issuanceData *issuanceData) *model.CertificateRequest 
 		Attributes:     attributes,
 		DeliveryFormat: issuanceData.profile.CertificateDeliveryFormat,
 		IncludeCaChain: true,
+		Tags:           issuanceData.tags,
 	}
 }
 
