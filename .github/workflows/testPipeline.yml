@@ -15,6 +15,7 @@ jobs:
     continue-on-error: true
     env:
       GOPATH: ${{ github.workspace }}/go
+      DIGICERT_API_KEY: ${{ secrets.DIGICERT_API_KEY }}
     steps:
       - name: 🔄 Checkout Terraform Provider Repo
         uses: actions/checkout@v3
