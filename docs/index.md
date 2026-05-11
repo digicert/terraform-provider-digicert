@@ -28,7 +28,7 @@ The `digicert_certificate` resource allows you to issue and manage certificates.
 resource "digicert_certificate" "example" {
   profile_id  = "8e201a92-4b16-412d-aa5c-bbeba3dacdef"
   common_name = "example.com"
-  dns_names   = ["www.example.com", "api.example.com"]
+  dns_names   = "www.example.com,api.example.com"
   csr         = "-----BEGIN CERTIFICATE REQUEST-----\nMIICjzCCAX/ZvGPbg=\n-----END CERTIFICATE REQUEST-----\n"
 }
 ```
@@ -39,8 +39,8 @@ resource "digicert_certificate" "example" {
 resource "digicert_certificate" "cert" {
   profile_id  = "8e201a92-4b16-412d-aa5c-bbeba3dacdef"
   common_name = "example.com"
-  dns_names   = ["www.example.com", "api.example.com"]
-  tags        = ["production", "web-servers"]
+  dns_names   = "www.example.com,api.example.com"
+  tags        = "production,web-servers"
 }
 ```
 
@@ -50,9 +50,9 @@ resource "digicert_certificate" "cert" {
 |--------------|---------------------------------------------------------------|----------------|----------|
 | profile_id   | ID of an existing DigiCert​​®​​ Trust Lifecycle Manager profile to use for certificate | String         | Yes      |
 | common_name  | Common name of the certificate                                | String         | Yes      |
-| dns_names    | SANs of the certificate, if any                               | List of Strings| No       |
+| dns_names    | SANs of the certificate, if any                               | Comma separated list of Strings| No       |
 | csr          | Certificate Signing Request (CSR) in PEM format               | String         | No       |
-| tags         | Tags to attach to the certificate                             | List of Strings| No       |
+| tags         | Tags to attach to the certificate                             | Comma separated list of Strings| No       |
 
 After enrollment, the `digicert_certificate` resource will expose:
 
